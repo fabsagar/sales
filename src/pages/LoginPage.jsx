@@ -4,6 +4,7 @@ import { BarChart3, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import toast from 'react-hot-toast';
 const validateLicense = async () => {
+    console.log("Validating license...");
     const response = await fetch("https://license.retailer-sales.workers.dev/validate", {
         method: "POST",
         headers: {
@@ -16,6 +17,7 @@ const validateLicense = async () => {
     });
 
     const data = await response.json();
+    console.log("License validation result:", data);
 
     if (!data.valid) {
         throw new Error("License expired. Contact support.");
