@@ -3,6 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import { BarChart3, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import toast from 'react-hot-toast';
+const validateLicense = async () => {
+    const response = await fetch("https://license.retailer-sales.workers.dev/validate", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "x-secret": "super-secret-key"
+        },
+        body: JSON.stringify({
+            license_key: import.meta.env.VITE_LICENSE_KEY
+        })
+    });
+
+    const data = await response.json();
+
+    if (!data.valid) {
+        throw new Error("License expired. Contact support.");
+    }
+
+    return data;
+};
 
 export default function LoginPage() {
     const { login } = useAuth();
@@ -16,6 +36,7 @@ export default function LoginPage() {
         if (!form.email || !form.password) { toast.error('Please fill all fields'); return; }
         setLoading(true);
         try {
+            await validateLicense();
             const user = await login(form.email, form.password);
             toast.success(`Welcome back, ${user.name}!`);
             navigate('/');
