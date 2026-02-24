@@ -35,6 +35,11 @@ export default defineConfig({
                 target: 'http://localhost:8787',
                 changeOrigin: true,
             },
+            '/license': {
+                target: 'https://license.retailer-sales.workers.dev',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/license/, ''),
+            },
         },
     },
 });

@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import toast from 'react-hot-toast';
 const validateLicense = async () => {
     console.log("Validating license...");
-    const response = await fetch("https://license.retailer-sales.workers.dev/validate", {
+    const response = await fetch("/license/validate", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
