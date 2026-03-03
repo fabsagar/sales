@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Plus, Minus, Trash2, ShoppingCart, Search, Loader2, ChevronDown, Building2 } from 'lucide-react';
 import { productsApi, retailersApi, ordersApi } from '../lib/api.js';
 import { formatCurrency } from '../lib/format.js';
@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 
 export default function NewOrderPage() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [retailers, setShops] = useState([]);
     const [products, setProducts] = useState([]);
     const [selectedShop, setSelectedShop] = useState('');
@@ -21,16 +22,49 @@ export default function NewOrderPage() {
             retailersApi.list(),
             productsApi.list({ limit: 100 }),
         ]).then(([r, p]) => {
-            setShops(r.retailers || []);
-            setProducts(p.products || []);
+            const fetchedShops = r.retailers || [];
+            const fetchedProducts = p.products || [];
+            setShops(fetchedShops);
+            setProducts(fetchedProducts);
+
+            // Handle pre-filled products from Gallery
+            const selected = location.state?.selectedProducts;
+            const preShop = location.state?.selectedShop;
+
+            if (preShop) setSelectedShop(preShop.toString());
+
+            if (selected && fetchedProducts.length > 0) {
+                const items = Object.entries(selected).map(([id, data]) => {
+                    const product = fetchedProducts.find(p => p.id === parseInt(id));
+                    if (!product) return null;
+
+                    // Support both {id: qty} and {id: {qty, price}} formats
+                    const quantity = typeof data === 'object' ? data.qty : data;
+                    const selling_price = typeof data === 'object' ? data.price : product.default_selling_price;
+
+                    return { product, quantity, selling_price };
+                }).filter(Boolean);
+
+                if (items.length > 0) {
+                    setOrderItems(items);
+                    toast.success(`Imported ${items.length} items from gallery`);
+                }
+            }
         }).catch(err => toast.error(err.message))
             .finally(() => setLoading(false));
-    }, []);
+    }, [location.state, productsApi, retailersApi]);
+    // Note: removed unnecessary log/comment from previous failed attempt
 
     const filtered = products.filter(p =>
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         p.category.toLowerCase().includes(search.toLowerCase())
     );
+
+    const updatePrice = (index, price) => {
+        const newItems = [...orderItems];
+        newItems[index].selling_price = price;
+        setOrderItems(newItems);
+    };
 
     const addItem = (product) => {
         const existing = orderItems.find(i => i.product.id === product.id);
@@ -166,7 +200,7 @@ export default function NewOrderPage() {
                                             <p className="text-xs text-slate-500">{product.category} · Stock: {product.stock_quantity}</p>
                                         </div>
                                         <div className="text-right flex-shrink-0">
-                                            <p className="text-base font-bold text-primary-400">{formatCurrency(product.default_selling_price)}</p>
+                                            {isAdmin && <p className="text-base font-bold text-primary-400">{formatCurrency(product.default_selling_price)}</p>}
                                             {isAdmin && <p className="text-[10px] text-slate-500">Cost: {formatCurrency(product.purchase_price)}</p>}
                                         </div>
                                         <button type="button" className="btn-primary btn-sm flex-shrink-0 px-2"
@@ -241,10 +275,12 @@ export default function NewOrderPage() {
                                                         />
                                                     </div>
                                                 </div>
-                                                <div className="flex justify-between mt-2 text-xs">
-                                                    <span className="text-slate-500">Total: <span className="text-white font-medium">{formatCurrency(lineTotal)}</span></span>
-                                                    {isAdmin && <span className="text-emerald-400">Profit: {formatCurrency(lineProfit)}</span>}
-                                                </div>
+                                                {isAdmin && (
+                                                    <div className="flex justify-between mt-2 text-xs">
+                                                        <span className="text-slate-500">Total: <span className="text-white font-medium">{formatCurrency(lineTotal)}</span></span>
+                                                        <span className="text-emerald-400">Profit: {formatCurrency(lineProfit)}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })}
@@ -262,7 +298,11 @@ export default function NewOrderPage() {
                                 <div className="mt-4 p-4 bg-surface-800/60 rounded-xl border border-surface-700/50 space-y-2">
                                     <div className="flex justify-between text-sm"><span className="text-slate-400">Items</span><span className="font-medium text-white">{totals.items}</span></div>
                                     <div className="flex justify-between text-sm"><span className="text-slate-400">Revenue</span><span className="font-semibold text-white">{formatCurrency(totals.amount)}</span></div>
-                                    {isAdmin && <div className="flex justify-between text-sm pt-2 border-t border-surface-700/50"><span className="text-slate-400">Profit</span><span className="font-bold text-emerald-400">{formatCurrency(totals.profit)}</span></div>}
+                                    {isAdmin && (
+                                        <>
+                                            <div className="flex justify-between text-sm pt-2 border-t border-surface-700/50"><span className="text-slate-400">Profit</span><span className="font-bold text-emerald-400">{formatCurrency(totals.profit)}</span></div>
+                                        </>
+                                    )}
                                 </div>
                             )}
 
