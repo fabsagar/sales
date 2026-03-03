@@ -134,10 +134,10 @@ export default function DashboardPage() {
                             <thead>
                                 <tr>
                                     <th>Order #</th>
-                                    <th>Retailer</th>
+                                    <th>Shop</th>
                                     {user.role === 'admin' && <th>Salesperson</th>}
                                     <th>Amount</th>
-                                    <th>Profit</th>
+                                    {user.role === 'admin' && <th>Profit</th>}
                                     <th>Status</th>
                                     <th>Date</th>
                                 </tr>
@@ -149,7 +149,7 @@ export default function DashboardPage() {
                                         <td>{order.retailer_name}</td>
                                         {user.role === 'admin' && <td>{order.salesperson_name}</td>}
                                         <td className="font-medium text-white">{formatCurrency(order.total_amount)}</td>
-                                        <td className="text-emerald-400">{formatCurrency(order.total_profit)}</td>
+                                        {user.role === 'admin' && <td className="text-emerald-400">{formatCurrency(order.total_profit)}</td>}
                                         <td><StatusBadge status={order.status} /></td>
                                         <td className="text-slate-500">{formatDate(order.created_at)}</td>
                                     </tr>

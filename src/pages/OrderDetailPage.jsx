@@ -92,17 +92,15 @@ export default function OrderDetailPage() {
                 </div>
                 <div className="section-card">
                     <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                            <span className="text-xs text-slate-400">Total Revenue</span>
+                            <span className="font-bold text-white text-lg">{formatCurrency(order.total_amount)}</span>
+                        </div>
                         {isAdmin && (
-                            <>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-xs text-slate-400">Total Revenue</span>
-                                    <span className="font-bold text-white text-lg">{formatCurrency(order.total_amount)}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-xs text-slate-400">Total Profit</span>
-                                    <span className="font-bold text-emerald-400 text-lg">{formatCurrency(order.total_profit)}</span>
-                                </div>
-                            </>
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs text-slate-400">Total Profit</span>
+                                <span className="font-bold text-emerald-400 text-lg">{formatCurrency(order.total_profit)}</span>
+                            </div>
                         )}
                         <div className="flex justify-between items-center pt-2 border-t border-surface-700/50">
                             <span className="text-xs text-slate-400">Items</span>
@@ -125,8 +123,8 @@ export default function OrderDetailPage() {
                                 <th>Category</th>
                                 <th className="text-right">Qty</th>
                                 {isAdmin && <th className="text-right">Purchase Price</th>}
-                                {isAdmin && <th className="text-right">Selling Price</th>}
-                                {isAdmin && <th className="text-right">Line Total</th>}
+                                <th className="text-right">Selling Price</th>
+                                <th className="text-right">Line Total</th>
                                 {isAdmin && <th className="text-right">Profit</th>}
                             </tr>
                         </thead>
@@ -140,8 +138,8 @@ export default function OrderDetailPage() {
                                         <td>{item.category}</td>
                                         <td className="text-right">{item.quantity}</td>
                                         {isAdmin && <td className="text-right text-slate-400">{formatCurrency(item.purchase_price)}</td>}
-                                        {isAdmin && <td className="text-right text-primary-400 font-medium">{formatCurrency(item.selling_price)}</td>}
-                                        {isAdmin && <td className="text-right font-semibold text-white">{formatCurrency(lineTotal)}</td>}
+                                        <td className="text-right text-primary-400 font-medium">{formatCurrency(item.selling_price)}</td>
+                                        <td className="text-right font-semibold text-white">{formatCurrency(lineTotal)}</td>
                                         {isAdmin && <td className="text-right text-emerald-400">{formatCurrency(lineProfit)}</td>}
                                     </tr>
                                 );
@@ -149,8 +147,8 @@ export default function OrderDetailPage() {
                         </tbody>
                         <tfoot>
                             <tr className="border-t-2 border-surface-600">
-                                <td colSpan={isAdmin ? "5" : "3"} className="px-4 py-3 text-right font-bold text-white">Totals</td>
-                                {isAdmin && <td className="px-4 py-3 text-right font-bold text-white text-base">{formatCurrency(order.total_amount)}</td>}
+                                <td colSpan={isAdmin ? "4" : "3"} className="px-4 py-3 text-right font-bold text-white">Totals</td>
+                                <td className="px-4 py-3 text-right font-bold text-white text-base">{formatCurrency(order.total_amount)}</td>
                                 {isAdmin && <td className="px-4 py-3 text-right font-bold text-emerald-400 text-base">{formatCurrency(order.total_profit)}</td>}
                             </tr>
                         </tfoot>

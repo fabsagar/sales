@@ -12,7 +12,6 @@ import clsx from '../lib/clsx.js';
 const NAV_ITEMS = {
     admin: [
         { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-        { to: '/products', icon: Package, label: 'Products' },
         { to: '/orders', icon: ShoppingCart, label: 'Orders' },
         { to: '/retailers', icon: Building2, label: 'Shops' },
         { to: '/reports', icon: TrendingUp, label: 'Reports' },
@@ -22,7 +21,6 @@ const NAV_ITEMS = {
     salesperson: [
         { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
         { to: '/products/gallery', icon: Package, label: 'Product Gallery' },
-        { to: '/products', icon: Package, label: 'Products' },
         { to: '/orders', icon: ShoppingCart, label: 'My Orders' },
         { to: '/orders/new', icon: PlusCircle, label: 'New Order' },
         { to: '/notifications', icon: Bell, label: 'Notifications' },

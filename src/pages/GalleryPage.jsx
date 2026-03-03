@@ -238,7 +238,7 @@ export default function GalleryPage() {
                 ...prev,
                 [product.id]: {
                     qty: current.qty + 1,
-                    price: current.price
+                    price: current.price || ''
                 }
             };
         });
@@ -455,7 +455,7 @@ export default function GalleryPage() {
                     >
                         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                             {products.map(product => {
-                                const cartItem = cart[product.id] || { qty: 0, price: product.default_selling_price };
+                                const cartItem = cart[product.id] || { qty: 0, price: '' };
                                 return (
                                     <SortableProductCard
                                         key={product.id}
