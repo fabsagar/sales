@@ -10,7 +10,6 @@ import {
     closestCenter,
     KeyboardSensor,
     PointerSensor,
-    MouseSensor,
     useSensor,
     useSensors,
 } from '@dnd-kit/core';
@@ -179,11 +178,22 @@ export default function GalleryPage() {
         return saved ? JSON.parse(saved) : {};
     }); // {productId: rankValue}
 
+    // Prevent drag from activating when interacting with inputs, buttons, etc.
+    function shouldHandleEvent(element) {
+        let cur = element;
+        while (cur) {
+            if (['INPUT', 'TEXTAREA', 'BUTTON', 'SELECT', 'A'].includes(cur.tagName)) {
+                return false;
+            }
+            cur = cur.parentElement;
+        }
+        return true;
+    }
+
     const sensors = useSensors(
         useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8,
-            },
+            activationConstraint: { distance: 8 },
+            onActivation: ({ event }) => shouldHandleEvent(event.target)
         }),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
