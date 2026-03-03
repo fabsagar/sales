@@ -79,7 +79,7 @@ export default function OrderDetailPage() {
             {/* Order Info Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="section-card">
-                    <p className="text-xs text-slate-500 mb-1">Retailer</p>
+                    <p className="text-xs text-slate-500 mb-1">Shop</p>
                     <p className="font-bold text-white">{order.retailer_name}</p>
                     {order.retailer_email && <p className="text-xs text-slate-400 mt-1">{order.retailer_email}</p>}
                     {order.retailer_phone && <p className="text-xs text-slate-400">{order.retailer_phone}</p>}
@@ -96,10 +96,12 @@ export default function OrderDetailPage() {
                             <span className="text-xs text-slate-400">Total Revenue</span>
                             <span className="font-bold text-white text-lg">{formatCurrency(order.total_amount)}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs text-slate-400">Total Profit</span>
-                            <span className="font-bold text-emerald-400 text-lg">{formatCurrency(order.total_profit)}</span>
-                        </div>
+                        {isAdmin && (
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs text-slate-400">Total Profit</span>
+                                <span className="font-bold text-emerald-400 text-lg">{formatCurrency(order.total_profit)}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between items-center pt-2 border-t border-surface-700/50">
                             <span className="text-xs text-slate-400">Items</span>
                             <span className="font-semibold text-slate-300">{items.length} products</span>
@@ -120,10 +122,10 @@ export default function OrderDetailPage() {
                                 <th>Product</th>
                                 <th>Category</th>
                                 <th className="text-right">Qty</th>
-                                <th className="text-right">Purchase Price</th>
+                                {isAdmin && <th className="text-right">Purchase Price</th>}
                                 <th className="text-right">Selling Price</th>
                                 <th className="text-right">Line Total</th>
-                                <th className="text-right">Profit</th>
+                                {isAdmin && <th className="text-right">Profit</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -135,19 +137,19 @@ export default function OrderDetailPage() {
                                         <td className="font-medium text-white">{item.product_name}</td>
                                         <td>{item.category}</td>
                                         <td className="text-right">{item.quantity}</td>
-                                        <td className="text-right text-slate-400">{formatCurrency(item.purchase_price)}</td>
+                                        {isAdmin && <td className="text-right text-slate-400">{formatCurrency(item.purchase_price)}</td>}
                                         <td className="text-right text-primary-400 font-medium">{formatCurrency(item.selling_price)}</td>
                                         <td className="text-right font-semibold text-white">{formatCurrency(lineTotal)}</td>
-                                        <td className="text-right text-emerald-400">{formatCurrency(lineProfit)}</td>
+                                        {isAdmin && <td className="text-right text-emerald-400">{formatCurrency(lineProfit)}</td>}
                                     </tr>
                                 );
                             })}
                         </tbody>
                         <tfoot>
                             <tr className="border-t-2 border-surface-600">
-                                <td colSpan="5" className="px-4 py-3 text-right font-bold text-white">Totals</td>
+                                <td colSpan={isAdmin ? "5" : "3"} className="px-4 py-3 text-right font-bold text-white">Totals</td>
                                 <td className="px-4 py-3 text-right font-bold text-white text-base">{formatCurrency(order.total_amount)}</td>
-                                <td className="px-4 py-3 text-right font-bold text-emerald-400 text-base">{formatCurrency(order.total_profit)}</td>
+                                {isAdmin && <td className="px-4 py-3 text-right font-bold text-emerald-400 text-base">{formatCurrency(order.total_profit)}</td>}
                             </tr>
                         </tfoot>
                     </table>

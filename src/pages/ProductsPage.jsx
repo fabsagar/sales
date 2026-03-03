@@ -166,7 +166,10 @@ export default function ProductsPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {products.map(product => {
-                        const margin = ((product.default_selling_price - product.purchase_price) / product.purchase_price * 100).toFixed(1);
+                        const showPricing = isAdmin;
+                        const margin = showPricing && product.purchase_price
+                            ? ((product.default_selling_price - product.purchase_price) / product.purchase_price * 100).toFixed(1)
+                            : null;
                         return (
                             <div key={product.id} className="glass-card p-5 hover:scale-[1.01] transition-all duration-200 group">
                                 <div className="flex items-start gap-3">
@@ -195,20 +198,22 @@ export default function ProductsPage() {
                                     <p className="text-xs text-slate-500 mt-3 line-clamp-2">{product.description}</p>
                                 )}
 
-                                <div className="mt-4 grid grid-cols-3 gap-3">
-                                    <div className="text-center">
-                                        <p className="text-[10px] text-slate-500">Purchase</p>
-                                        <p className="text-sm font-semibold text-white">{formatCurrency(product.purchase_price)}</p>
+                                {showPricing && (
+                                    <div className="mt-4 grid grid-cols-3 gap-3">
+                                        <div className="text-center">
+                                            <p className="text-[10px] text-slate-500">Purchase</p>
+                                            <p className="text-sm font-semibold text-white">{formatCurrency(product.purchase_price)}</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-[10px] text-slate-500">Selling</p>
+                                            <p className="text-sm font-semibold text-primary-400">{formatCurrency(product.default_selling_price)}</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-[10px] text-slate-500">Margin</p>
+                                            <p className="text-sm font-semibold text-emerald-400">{margin}%</p>
+                                        </div>
                                     </div>
-                                    <div className="text-center">
-                                        <p className="text-[10px] text-slate-500">Selling</p>
-                                        <p className="text-sm font-semibold text-primary-400">{formatCurrency(product.default_selling_price)}</p>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className="text-[10px] text-slate-500">Margin</p>
-                                        <p className="text-sm font-semibold text-emerald-400">{margin}%</p>
-                                    </div>
-                                </div>
+                                )}
 
                                 <div className="mt-3 pt-3 border-t border-surface-700/50 flex items-center justify-between">
                                     <span className="text-xs text-slate-500">Stock</span>

@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 
 const EMPTY_FORM = { name: '', email: '', phone: '', address: '' };
 
-function RetailerModal({ retailer, onClose, onSaved }) {
+function ShopModal({ retailer, onClose, onSaved }) {
     const [form, setForm] = useState(retailer ? {
         name: retailer.name, email: retailer.email || '',
         phone: retailer.phone || '', address: retailer.address || '',
@@ -21,10 +21,10 @@ function RetailerModal({ retailer, onClose, onSaved }) {
         try {
             if (retailer) {
                 await retailersApi.update(retailer.id, form);
-                toast.success('Retailer updated');
+                toast.success('Shop updated');
             } else {
                 await retailersApi.create(form);
-                toast.success('Retailer added');
+                toast.success('Shop added');
             }
             onSaved();
             onClose();
@@ -36,12 +36,12 @@ function RetailerModal({ retailer, onClose, onSaved }) {
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
             <div className="modal-box">
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-bold text-white">{retailer ? 'Edit Retailer' : 'Add Retailer'}</h2>
+                    <h2 className="text-lg font-bold text-white">{retailer ? 'Edit Shop' : 'Add Shop'}</h2>
                     <button onClick={onClose} className="btn-icon"><X size={16} /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1.5">Retailer Name *</label>
+                        <label className="block text-xs font-medium text-slate-400 mb-1.5">Shop Name *</label>
                         <input className="input" placeholder="Business name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
                     </div>
                     <div>
@@ -68,33 +68,33 @@ function RetailerModal({ retailer, onClose, onSaved }) {
     );
 }
 
-export default function RetailersPage() {
+export default function ShopsPage() {
     const { user } = useAuth();
-    const [retailers, setRetailers] = useState([]);
+    const [retailers, setShops] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [modal, setModal] = useState(null);
     const [deleting, setDeleting] = useState(null);
     const isAdmin = user.role === 'admin';
 
-    const fetchRetailers = useCallback(async () => {
+    const fetchShops = useCallback(async () => {
         setLoading(true);
         try {
             const data = await retailersApi.list({ search });
-            setRetailers(data.retailers || []);
+            setShops(data.retailers || []);
         } catch (err) { toast.error(err.message); }
         finally { setLoading(false); }
     }, [search]);
 
-    useEffect(() => { fetchRetailers(); }, [fetchRetailers]);
+    useEffect(() => { fetchShops(); }, [fetchShops]);
 
     const handleDelete = async (retailer) => {
         if (!confirm(`Delete retailer "${retailer.name}"?`)) return;
         setDeleting(retailer.id);
         try {
             await retailersApi.delete(retailer.id);
-            toast.success('Retailer deleted');
-            fetchRetailers();
+            toast.success('Shop deleted');
+            fetchShops();
         } catch (err) { toast.error(err.message); }
         finally { setDeleting(null); }
     };
@@ -103,12 +103,12 @@ export default function RetailersPage() {
         <div className="animate-fade-in">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Retailers</h1>
+                    <h1 className="page-title">Shops</h1>
                     <p className="text-slate-400 text-sm mt-1">{retailers.length} registered retailers</p>
                 </div>
                 {isAdmin && (
                     <button onClick={() => setModal('create')} className="btn-primary">
-                        <Plus size={16} /> Add Retailer
+                        <Plus size={16} /> Add Shop
                     </button>
                 )}
             </div>
@@ -124,7 +124,7 @@ export default function RetailersPage() {
                 <div className="section-card text-center py-16">
                     <Building2 size={48} className="mx-auto mb-4 text-slate-600" />
                     <p className="text-slate-400 font-medium">No retailers found</p>
-                    {isAdmin && <button onClick={() => setModal('create')} className="btn-primary mt-4">Add First Retailer</button>}
+                    {isAdmin && <button onClick={() => setModal('create')} className="btn-primary mt-4">Add First Shop</button>}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -156,10 +156,10 @@ export default function RetailersPage() {
             )}
 
             {modal && (
-                <RetailerModal
+                <ShopModal
                     retailer={modal === 'create' ? null : modal}
                     onClose={() => setModal(null)}
-                    onSaved={fetchRetailers}
+                    onSaved={fetchShops}
                 />
             )}
         </div>

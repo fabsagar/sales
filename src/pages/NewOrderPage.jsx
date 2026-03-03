@@ -7,9 +7,9 @@ import toast from 'react-hot-toast';
 
 export default function NewOrderPage() {
     const navigate = useNavigate();
-    const [retailers, setRetailers] = useState([]);
+    const [retailers, setShops] = useState([]);
     const [products, setProducts] = useState([]);
-    const [selectedRetailer, setSelectedRetailer] = useState('');
+    const [selectedShop, setSelectedShop] = useState('');
     const [search, setSearch] = useState('');
     const [orderItems, setOrderItems] = useState([]); // [{product, quantity, selling_price}]
     const [notes, setNotes] = useState('');
@@ -21,7 +21,7 @@ export default function NewOrderPage() {
             retailersApi.list(),
             productsApi.list({ limit: 100 }),
         ]).then(([r, p]) => {
-            setRetailers(r.retailers || []);
+            setShops(r.retailers || []);
             setProducts(p.products || []);
         }).catch(err => toast.error(err.message))
             .finally(() => setLoading(false));
@@ -60,7 +60,7 @@ export default function NewOrderPage() {
 
     const totals = orderItems.reduce((acc, item) => {
         const sp = parseFloat(item.selling_price) || 0;
-        const pp = item.product.purchase_price;
+        const pp = item.product.purchase_price || 0;
         const qty = parseInt(item.quantity) || 0;
         acc.amount += sp * qty;
         acc.profit += (sp - pp) * qty;
@@ -68,9 +68,11 @@ export default function NewOrderPage() {
         return acc;
     }, { amount: 0, profit: 0, items: 0 });
 
+    const isAdmin = useAuth().user.role === 'admin';
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!selectedRetailer) { toast.error('Please select a retailer'); return; }
+        if (!selectedShop) { toast.error('Please select a shop'); return; }
         if (orderItems.length === 0) { toast.error('Please add at least one product'); return; }
 
         // Validate quantities and prices
@@ -83,7 +85,7 @@ export default function NewOrderPage() {
         setSubmitting(true);
         try {
             const payload = {
-                retailer_id: parseInt(selectedRetailer),
+                retailer_id: parseInt(selectedShop),
                 notes,
                 items: orderItems.map(i => ({
                     product_id: i.product.id,
@@ -108,7 +110,7 @@ export default function NewOrderPage() {
             <div className="page-header">
                 <div>
                     <h1 className="page-title">Create New Order</h1>
-                    <p className="text-slate-400 text-sm mt-1">Select retailer and add products</p>
+                    <p className="text-slate-400 text-sm mt-1">Select shop and add products</p>
                 </div>
             </div>
 
@@ -116,18 +118,18 @@ export default function NewOrderPage() {
                 <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
                     {/* Left: Products */}
                     <div className="xl:col-span-3 space-y-4">
-                        {/* Retailer select */}
+                        {/* Shop select */}
                         <div className="section-card">
                             <label className="block text-xs font-medium text-slate-400 mb-2">
-                                <Building2 size={13} className="inline mr-1" /> Select Retailer *
+                                <Building2 size={13} className="inline mr-1" /> Select Shop *
                             </label>
                             <select
                                 className="input"
-                                value={selectedRetailer}
-                                onChange={e => setSelectedRetailer(e.target.value)}
+                                value={selectedShop}
+                                onChange={e => setSelectedShop(e.target.value)}
                                 required
                             >
-                                <option value="">-- Choose Retailer --</option>
+                                <option value="">-- Choose Shop --</option>
                                 {retailers.map(r => (
                                     <option key={r.id} value={r.id}>{r.name} {r.phone ? `(${r.phone})` : ''}</option>
                                 ))}
@@ -145,23 +147,27 @@ export default function NewOrderPage() {
                                 {filtered.length === 0 ? (
                                     <p className="text-slate-500 text-sm text-center py-6">No products found</p>
                                 ) : filtered.map(product => (
-                                    <div key={product.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer
+                                    <div key={product.id} className={`flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer
                     ${product.stock_quantity < 1
                                             ? 'border-surface-700/30 opacity-50 cursor-not-allowed'
                                             : 'border-surface-700 hover:border-primary-500/50 hover:bg-surface-800/50'
                                         }`}
                                         onClick={() => product.stock_quantity > 0 && addItem(product)}
                                     >
-                                        <div className="w-9 h-9 rounded-lg bg-surface-700 flex items-center justify-center flex-shrink-0 text-slate-500">
-                                            <ShoppingCart size={14} />
+                                        <div className="w-16 h-16 rounded-lg bg-surface-700 flex items-center justify-center flex-shrink-0 text-slate-500 overflow-hidden">
+                                            {product.image_url ? (
+                                                <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <ShoppingCart size={20} />
+                                            )}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-white truncate">{product.name}</p>
+                                            <p className="text-base font-semibold text-white truncate">{product.name}</p>
                                             <p className="text-xs text-slate-500">{product.category} · Stock: {product.stock_quantity}</p>
                                         </div>
                                         <div className="text-right flex-shrink-0">
-                                            <p className="text-sm font-semibold text-primary-400">{formatCurrency(product.default_selling_price)}</p>
-                                            <p className="text-[10px] text-slate-500">Cost: {formatCurrency(product.purchase_price)}</p>
+                                            <p className="text-base font-bold text-primary-400">{formatCurrency(product.default_selling_price)}</p>
+                                            {isAdmin && <p className="text-[10px] text-slate-500">Cost: {formatCurrency(product.purchase_price)}</p>}
                                         </div>
                                         <button type="button" className="btn-primary btn-sm flex-shrink-0 px-2"
                                             onClick={e => { e.stopPropagation(); product.stock_quantity > 0 && addItem(product); }}
@@ -237,7 +243,7 @@ export default function NewOrderPage() {
                                                 </div>
                                                 <div className="flex justify-between mt-2 text-xs">
                                                     <span className="text-slate-500">Total: <span className="text-white font-medium">{formatCurrency(lineTotal)}</span></span>
-                                                    <span className="text-emerald-400">Profit: {formatCurrency(lineProfit)}</span>
+                                                    {isAdmin && <span className="text-emerald-400">Profit: {formatCurrency(lineProfit)}</span>}
                                                 </div>
                                             </div>
                                         );
@@ -256,11 +262,11 @@ export default function NewOrderPage() {
                                 <div className="mt-4 p-4 bg-surface-800/60 rounded-xl border border-surface-700/50 space-y-2">
                                     <div className="flex justify-between text-sm"><span className="text-slate-400">Items</span><span className="font-medium text-white">{totals.items}</span></div>
                                     <div className="flex justify-between text-sm"><span className="text-slate-400">Revenue</span><span className="font-semibold text-white">{formatCurrency(totals.amount)}</span></div>
-                                    <div className="flex justify-between text-sm pt-2 border-t border-surface-700/50"><span className="text-slate-400">Profit</span><span className="font-bold text-emerald-400">{formatCurrency(totals.profit)}</span></div>
+                                    {isAdmin && <div className="flex justify-between text-sm pt-2 border-t border-surface-700/50"><span className="text-slate-400">Profit</span><span className="font-bold text-emerald-400">{formatCurrency(totals.profit)}</span></div>}
                                 </div>
                             )}
 
-                            <button type="submit" disabled={submitting || orderItems.length === 0 || !selectedRetailer} className="btn-primary w-full mt-4 py-3">
+                            <button type="submit" disabled={submitting || orderItems.length === 0 || !selectedShop} className="btn-primary w-full mt-4 py-3">
                                 {submitting ? <><Loader2 size={15} className="animate-spin" /> Submitting...</> : 'Submit Order'}
                             </button>
                         </div>

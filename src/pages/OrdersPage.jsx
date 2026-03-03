@@ -94,10 +94,10 @@ export default function OrdersPage() {
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Retailer</th>
+                                    <th>Shop</th>
                                     {isAdmin && <th>Salesperson</th>}
                                     <th>Amount</th>
-                                    <th>Profit</th>
+                                    {isAdmin && <th>Profit</th>}
                                     <th>Status</th>
                                     <th>Date</th>
                                     <th>Actions</th>
@@ -110,7 +110,7 @@ export default function OrdersPage() {
                                         <td className="font-medium text-white">{order.retailer_name}</td>
                                         {isAdmin && <td>{order.salesperson_name}</td>}
                                         <td className="font-semibold">{formatCurrency(order.total_amount)}</td>
-                                        <td className="text-emerald-400">{formatCurrency(order.total_profit)}</td>
+                                        {isAdmin && <td className="text-emerald-400">{formatCurrency(order.total_profit)}</td>}
                                         <td><StatusBadge status={order.status} /></td>
                                         <td className="text-slate-500 text-xs">{formatDateTime(order.created_at)}</td>
                                         <td>

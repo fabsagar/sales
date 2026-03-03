@@ -11,6 +11,7 @@ import RetailersPage from './pages/RetailersPage.jsx';
 import ReportsPage from './pages/ReportsPage.jsx';
 import NotificationsPage from './pages/NotificationsPage.jsx';
 import UsersPage from './pages/UsersPage.jsx';
+import GalleryPage from './pages/GalleryPage.jsx';
 
 function PrivateRoute({ children, roles }) {
     const { user, loading } = useAuth();
@@ -36,6 +37,7 @@ function AppRoutes() {
             <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
                 <Route index element={<DashboardPage />} />
                 <Route path="products" element={<ProductsPage />} />
+                <Route path="products/gallery" element={<PrivateRoute roles={['admin', 'salesperson']}><GalleryPage /></PrivateRoute>} />
                 <Route path="orders" element={<OrdersPage />} />
                 <Route path="orders/new" element={<PrivateRoute roles={['admin', 'salesperson']}><NewOrderPage /></PrivateRoute>} />
                 <Route path="orders/:id" element={<OrderDetailPage />} />
