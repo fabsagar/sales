@@ -10,6 +10,7 @@ import {
     closestCenter,
     KeyboardSensor,
     PointerSensor,
+    MouseSensor,
     useSensor,
     useSensors,
 } from '@dnd-kit/core';
@@ -246,13 +247,13 @@ export default function GalleryPage() {
     };
 
     const updateCartPrice = (productId, price) => {
-        setCart(prev => {
-            if (!prev[productId]) return prev;
-            return {
-                ...prev,
-                [productId]: { ...prev[productId], price }
-            };
-        });
+        setCart(prev => ({
+            ...prev,
+            [productId]: {
+                ...(prev[productId] || { qty: 0 }),
+                price
+            }
+        }));
     };
 
     const removeFromCart = (productId) => {

@@ -12,6 +12,7 @@ import clsx from '../lib/clsx.js';
 const NAV_ITEMS = {
     admin: [
         { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+        { to: '/products', icon: Package, label: 'Products' },
         { to: '/orders', icon: ShoppingCart, label: 'Orders' },
         { to: '/retailers', icon: Building2, label: 'Shops' },
         { to: '/reports', icon: TrendingUp, label: 'Reports' },
