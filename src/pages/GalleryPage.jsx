@@ -229,10 +229,7 @@ export default function GalleryPage() {
             return;
         }
         setCart(prev => {
-            const shopPrices = selectedShop ? (customPrices[selectedShop] || {}) : {};
-            const defaultPrice = shopPrices[product.id] || product.default_selling_price;
-
-            const current = prev[product.id] || { qty: 0, price: defaultPrice };
+            const current = prev[product.id] || { qty: 0, price: '' };
             if (current.qty >= product.stock_quantity) {
                 toast.error('Cannot add more than available stock');
                 return prev;
@@ -256,17 +253,6 @@ export default function GalleryPage() {
                 [productId]: { ...prev[productId], price }
             };
         });
-
-        // Save price for this shop
-        if (selectedShop) {
-            setCustomPrices(prev => {
-                const newPrices = { ...prev };
-                if (!newPrices[selectedShop]) newPrices[selectedShop] = {};
-                newPrices[selectedShop][productId] = price;
-                localStorage.setItem(`gallery_prices_${user.id}`, JSON.stringify(newPrices));
-                return newPrices;
-            });
-        }
     };
 
     const removeFromCart = (productId) => {

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Plus, Minus, Trash2, ShoppingCart, Search, Loader2, ChevronDown, Building2 } from 'lucide-react';
 import { productsApi, retailersApi, ordersApi } from '../lib/api.js';
 import { formatCurrency } from '../lib/format.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import toast from 'react-hot-toast';
 
 export default function NewOrderPage() {
@@ -40,7 +41,7 @@ export default function NewOrderPage() {
 
                     // Support both {id: qty} and {id: {qty, price}} formats
                     const quantity = typeof data === 'object' ? data.qty : data;
-                    const selling_price = typeof data === 'object' ? data.price : product.default_selling_price;
+                    const selling_price = typeof data === 'object' ? (data.price || '') : '';
 
                     return { product, quantity, selling_price };
                 }).filter(Boolean);
@@ -76,7 +77,7 @@ export default function NewOrderPage() {
             setOrderItems(items => [...items, {
                 product,
                 quantity: 1,
-                selling_price: product.default_selling_price,
+                selling_price: '',
             }]);
         }
         toast.success(`${product.name} added`, { duration: 1500 });
