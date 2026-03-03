@@ -134,3 +134,18 @@ export const notificationsApi = {
     markRead: (id) => api.put(`/notifications/${id}/read`, {}),
     markAllRead: () => api.put('/notifications/read-all', {}),
 };
+
+// Image upload
+export const uploadImage = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = localStorage.getItem('auth_token');
+    const res = await fetch(`${API_BASE}/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload failed');
+    return data.url;
+};

@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Edit2, Trash2, Loader2, Package, X, Image } from 'lucide-react';
-import { productsApi } from '../lib/api.js';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Plus, Search, Edit2, Trash2, Loader2, Package, X, Upload } from 'lucide-react';
+import { productsApi, uploadImage } from '../lib/api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { formatCurrency } from '../lib/format.js';
 import toast from 'react-hot-toast';
@@ -9,22 +9,57 @@ const EMPTY_FORM = { name: '', description: '', category: '', purchase_price: ''
 
 function ProductModal({ product, onClose, onSaved }) {
     const [form, setForm] = useState(product ? {
-        name: product.name, description: product.description || '', category: product.category,
-        purchase_price: product.purchase_price, default_selling_price: product.default_selling_price,
+        name: product.name, description: product.description || '', category: product.category || '',
+        purchase_price: product.purchase_price, default_selling_price: product.default_selling_price || '',
         stock_quantity: product.stock_quantity, image_url: product.image_url || '',
     } : EMPTY_FORM);
     const [saving, setSaving] = useState(false);
+    const [imagePreview, setImagePreview] = useState(product?.image_url || null);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef(null);
 
     const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Image must be under 5MB');
+            return;
+        }
+        // Show local preview immediately
+        const reader = new FileReader();
+        reader.onload = (ev) => setImagePreview(ev.target.result);
+        reader.readAsDataURL(file);
+
+        // Upload to R2
+        setUploading(true);
+        try {
+            const url = await uploadImage(file);
+            setForm(f => ({ ...f, image_url: url }));
+            toast.success('Image uploaded');
+        } catch (err) {
+            toast.error(err.message || 'Upload failed');
+            setImagePreview(null);
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!form.name || !form.category || !form.purchase_price || !form.default_selling_price) {
-            toast.error('Please fill all required fields'); return;
+        if (!form.name || !form.purchase_price) {
+            toast.error('Product name and purchase price are required'); return;
         }
         setSaving(true);
         try {
-            const data = { ...form, purchase_price: +form.purchase_price, default_selling_price: +form.default_selling_price, stock_quantity: +form.stock_quantity || 0 };
+            const data = {
+                ...form,
+                purchase_price: +form.purchase_price,
+                default_selling_price: form.default_selling_price !== '' ? +form.default_selling_price : null,
+                stock_quantity: +form.stock_quantity || 0,
+                category: form.category || '',
+            };
             if (product) {
                 await productsApi.update(product.id, data);
                 toast.success('Product updated');
@@ -59,8 +94,8 @@ function ProductModal({ product, onClose, onSaved }) {
                             <input name="name" className="input" value={form.name} onChange={handleChange} placeholder="e.g. Premium Laptop" required />
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-slate-400 mb-1.5">Category *</label>
-                            <input name="category" className="input" value={form.category} onChange={handleChange} placeholder="Electronics" required />
+                            <label className="block text-xs font-medium text-slate-400 mb-1.5">Category</label>
+                            <input name="category" className="input" value={form.category} onChange={handleChange} placeholder="Electronics (optional)" />
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-slate-400 mb-1.5">Stock Quantity</label>
@@ -72,18 +107,46 @@ function ProductModal({ product, onClose, onSaved }) {
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                                Selling Price (₹) *
+                                Selling Price (₹)
                                 {profit && <span className="ml-2 text-emerald-400">({profit}% margin)</span>}
                             </label>
-                            <input name="default_selling_price" type="number" min="0" step="0.01" className="input" value={form.default_selling_price} onChange={handleChange} placeholder="0.00" required />
+                            <input name="default_selling_price" type="number" min="0" step="0.01" className="input" value={form.default_selling_price} onChange={handleChange} placeholder="0.00 (optional)" />
                         </div>
                         <div className="sm:col-span-2">
                             <label className="block text-xs font-medium text-slate-400 mb-1.5">Description</label>
                             <textarea name="description" className="input resize-none" rows={2} value={form.description} onChange={handleChange} placeholder="Product description..." />
                         </div>
                         <div className="sm:col-span-2">
-                            <label className="block text-xs font-medium text-slate-400 mb-1.5">Image URL</label>
-                            <input name="image_url" className="input" value={form.image_url} onChange={handleChange} placeholder="https://..." />
+                            <label className="block text-xs font-medium text-slate-400 mb-1.5">Product Image</label>
+                            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                            {imagePreview ? (
+                                <div className="relative w-full h-40 rounded-xl overflow-hidden bg-surface-800 border border-surface-700">
+                                    <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
+                                    {uploading && (
+                                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                            <Loader2 size={24} className="animate-spin text-white" />
+                                        </div>
+                                    )}
+                                    {!uploading && (
+                                        <button
+                                            type="button"
+                                            onClick={() => { setImagePreview(null); setForm(f => ({ ...f, image_url: '' })); }}
+                                            className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="w-full h-24 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-surface-600 rounded-xl text-slate-500 hover:border-primary-500 hover:text-primary-400 transition-colors"
+                                >
+                                    <Upload size={22} />
+                                    <span className="text-xs">Click to upload image (max 2MB)</span>
+                                </button>
+                            )}
                         </div>
                     </div>
                     <div className="flex gap-3 mt-6">
@@ -167,7 +230,7 @@ export default function ProductsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {products.map(product => {
                         const showPricing = isAdmin;
-                        const margin = showPricing && product.purchase_price
+                        const margin = showPricing && product.purchase_price && product.default_selling_price
                             ? ((product.default_selling_price - product.purchase_price) / product.purchase_price * 100).toFixed(1)
                             : null;
                         return (
@@ -182,7 +245,7 @@ export default function ProductsPage() {
                                     )}
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-semibold text-white text-sm truncate">{product.name}</h3>
-                                        <span className="text-[10px] text-slate-500 bg-surface-700/50 px-1.5 py-0.5 rounded-md">{product.category}</span>
+                                        {product.category && <span className="text-[10px] text-slate-500 bg-surface-700/50 px-1.5 py-0.5 rounded-md">{product.category}</span>}
                                     </div>
                                     {isAdmin && (
                                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -206,11 +269,13 @@ export default function ProductsPage() {
                                         </div>
                                         <div className="text-center">
                                             <p className="text-[10px] text-slate-500">Selling</p>
-                                            <p className="text-sm font-semibold text-primary-400">{formatCurrency(product.default_selling_price)}</p>
+                                            <p className="text-sm font-semibold text-primary-400">
+                                                {product.default_selling_price ? formatCurrency(product.default_selling_price) : '—'}
+                                            </p>
                                         </div>
                                         <div className="text-center">
                                             <p className="text-[10px] text-slate-500">Margin</p>
-                                            <p className="text-sm font-semibold text-emerald-400">{margin}%</p>
+                                            <p className="text-sm font-semibold text-emerald-400">{margin ? `${margin}%` : '—'}</p>
                                         </div>
                                     </div>
                                 )}
