@@ -37,12 +37,10 @@ export default function NewOrderPage() {
             if (selected && fetchedProducts.length > 0) {
                 const items = Object.entries(selected).map(([id, data]) => {
                     const product = fetchedProducts.find(p => p.id === parseInt(id));
-                    if (!product) return null;
-
-                    // Support both {id: qty} and {id: {qty, price}} formats
                     const quantity = typeof data === 'object' ? data.qty : data;
-                    const selling_price = typeof data === 'object' ? (data.price || '') : '';
+                    if (!product || quantity <= 0) return null;
 
+                    const selling_price = typeof data === 'object' ? (data.price || '') : '';
                     return { product, quantity, selling_price };
                 }).filter(Boolean);
 
