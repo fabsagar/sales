@@ -112,6 +112,10 @@ export default function NewOrderPage() {
         for (const item of orderItems) {
             if (!item.quantity || item.quantity < 1) { toast.error(`Invalid quantity for ${item.product.name}`); return; }
             if (!item.selling_price || item.selling_price < 0) { toast.error(`Invalid price for ${item.product.name}`); return; }
+            if (!isAdmin && parseFloat(item.selling_price) < item.product.purchase_price) {
+                toast.error(`Price for ${item.product.name} is not correct`);
+                return;
+            }
             if (item.quantity > item.product.stock_quantity) { toast.error(`Insufficient stock for ${item.product.name}`); return; }
         }
 
@@ -270,7 +274,7 @@ export default function NewOrderPage() {
                                                         <label className="text-[10px] text-slate-500">Selling Price (₹)</label>
                                                         <input type="number" min="0" step="0.01" value={item.selling_price}
                                                             onChange={e => updateItem(item.product.id, 'selling_price', e.target.value)}
-                                                            className="input py-1 px-2 text-sm mt-1"
+                                                            className={`input py-1 px-2 text-sm mt-1 ${!isAdmin && item.selling_price && parseFloat(item.selling_price) < item.product.purchase_price ? 'border-red-500 text-red-500 font-bold animate-pulse' : ''}`}
                                                         />
                                                     </div>
                                                 </div>

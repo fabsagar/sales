@@ -73,7 +73,7 @@ export const api = new ApiClient();
 
 // Auth
 export const authApi = {
-    login: (email, password) => api.post('/login', { email, password }),
+    googleLogin: (credential) => api.post('/auth/google', { credential }),
     register: (data) => api.post('/register', data),
     me: () => api.get('/me'),
 };

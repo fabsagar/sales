@@ -30,7 +30,8 @@ function SortableProductCard({
     onSelect,
     onAddToCart,
     onRemoveFromCart,
-    onUpdatePrice
+    onUpdatePrice,
+    isAdmin
 }) {
     const {
         attributes,
@@ -72,7 +73,7 @@ function SortableProductCard({
             <div
                 {...attributes}
                 {...listeners}
-                className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 bg-black/50 text-white p-1.5 rounded-lg backdrop-blur-md cursor-grab active:cursor-grabbing transition-opacity"
+                className="absolute top-3 left-3 z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 bg-black/50 text-white p-1.5 rounded-lg backdrop-blur-md cursor-grab active:cursor-grabbing transition-opacity touch-none"
                 onClick={e => e.stopPropagation()}
                 title="Drag to reorder"
             >
@@ -122,7 +123,7 @@ function SortableProductCard({
                             type="number"
                             step="0.01"
                             min="0"
-                            className="w-full bg-surface-900 border border-surface-700/50 rounded-lg px-2 py-1 text-sm font-bold text-white focus:ring-1 focus:ring-primary-500/50 outline-none"
+                            className={`w-full bg-surface-900 border rounded-lg px-2 py-1 text-sm font-bold text-white focus:ring-1 focus:ring-primary-500/50 outline-none ${!isAdmin && cartItem.price && parseFloat(cartItem.price) < product.purchase_price ? 'border-red-500 text-red-500 animate-pulse' : 'border-surface-700/50'}`}
                             value={cartItem.price}
                             onChange={(e) => onUpdatePrice(product.id, e.target.value)}
                             onClick={(e) => e.stopPropagation()}
@@ -253,6 +254,19 @@ export default function GalleryPage() {
                 }
             };
         });
+        if (!isAdmin) {
+            const currentPrice = cart[product.id]?.price || product.default_selling_price || 0;
+            if (parseFloat(currentPrice) < product.purchase_price) {
+                // We'll allow adding it to cart state but show warning? 
+                // Actually the user said "do not let it add to cart/order".
+                // If I don't add it, they can't even start. 
+                // Let's block the increment if the price is already set too low.
+                if (cart[product.id]?.price && parseFloat(cart[product.id].price) < product.purchase_price) {
+                    toast.error('Please correct prices.');
+                    return;
+                }
+            }
+        }
         toast.success(`Added ${product.name} to order`, { duration: 1500 });
     };
 
@@ -298,6 +312,19 @@ export default function GalleryPage() {
         if (cartTotalItems === 0) {
             toast.error('Please add products to your order first');
             return;
+        }
+
+        if (!isAdmin) {
+            const invalidItems = Object.entries(cart).filter(([id, data]) => {
+                const product = products.find(p => p.id === parseInt(id));
+                const price = parseFloat(data.price) || (product ? product.default_selling_price : 0);
+                return product && price < product.purchase_price;
+            });
+
+            if (invalidItems.length > 0) {
+                toast.error('Please correct prices.');
+                return;
+            }
         }
         // In a real app, we might pass the cart state via context or navigation state
         // For now, we'll just navigate to the new order page.
@@ -477,6 +504,7 @@ export default function GalleryPage() {
                                         onAddToCart={addToCart}
                                         onRemoveFromCart={removeFromCart}
                                         onUpdatePrice={updateCartPrice}
+                                        isAdmin={isAdmin}
                                     />
                                 );
                             })}

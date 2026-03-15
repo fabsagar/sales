@@ -17,8 +17,8 @@ export function AuthProvider({ children }) {
             .finally(() => setLoading(false));
     }, []);
 
-    const login = useCallback(async (email, password) => {
-        const data = await authApi.login(email, password);
+    const login = useCallback(async (credential) => {
+        const data = await authApi.googleLogin(credential);
         api.setToken(data.token);
         setUser(data.user);
         return data.user;
