@@ -34,13 +34,14 @@ const NAV_ITEMS = {
 };
 
 export default function Layout() {
-    const { user, logout } = useAuth();
+    const { user, logout, selectedRole } = useAuth();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const pollRef = useRef(null);
 
-    const navItems = NAV_ITEMS[user?.role] || [];
+    const activeRole = user?.role === 'user' ? selectedRole : user?.role;
+    const navItems = NAV_ITEMS[activeRole] || [];
 
     // Polling notifications every 8 seconds
     useEffect(() => {
@@ -64,6 +65,7 @@ export default function Layout() {
         admin: 'text-violet-400 bg-violet-500/10 border-violet-500/30',
         salesperson: 'text-blue-400 bg-blue-500/10 border-blue-500/30',
         retailer: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
+        user: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
     };
 
     return (
@@ -107,8 +109,8 @@ export default function Layout() {
                         </div>
                         <div className="min-w-0">
                             <p className="text-sm font-semibold text-white truncate">{user?.name}</p>
-                            <span className={clsx('inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border capitalize', roleColors[user?.role])}>
-                                {user?.role}
+                            <span className={clsx('inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border capitalize', roleColors[activeRole])}>
+                                {activeRole}
                             </span>
                         </div>
                     </div>

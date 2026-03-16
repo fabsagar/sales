@@ -3,19 +3,12 @@ import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Layout from './components/Layout.jsx';
 import LoginPage from './pages/LoginPage.jsx';
+import RoleSelectionPage from './pages/RoleSelectionPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
-import ProductsPage from './pages/ProductsPage.jsx';
-import OrdersPage from './pages/OrdersPage.jsx';
-import NewOrderPage from './pages/NewOrderPage.jsx';
-import OrderDetailPage from './pages/OrderDetailPage.jsx';
-import RetailersPage from './pages/RetailersPage.jsx';
-import ReportsPage from './pages/ReportsPage.jsx';
-import NotificationsPage from './pages/NotificationsPage.jsx';
-import UsersPage from './pages/UsersPage.jsx';
-import GalleryPage from './pages/GalleryPage.jsx';
+// ... rest of imports
 
 function PrivateRoute({ children, roles }) {
-    const { user, loading } = useAuth();
+    const { user, loading, selectedRole } = useAuth();
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-surface-900">
             <div className="flex flex-col items-center gap-4">
@@ -25,7 +18,15 @@ function PrivateRoute({ children, roles }) {
         </div>
     );
     if (!user) return <Navigate to="/login" replace />;
-    if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
+
+    // Handle 'user' role switcher
+    if (user.role === 'user' && !selectedRole) {
+        return <Navigate to="/select-role" replace />;
+    }
+
+    const activeRole = user.role === 'user' ? selectedRole : user.role;
+
+    if (roles && !roles.includes(activeRole)) return <Navigate to="/" replace />;
     return children;
 }
 
@@ -35,6 +36,11 @@ function AppRoutes() {
     return (
         <Routes>
             <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
+            <Route path="/select-role" element={
+                <PrivateRoute>
+                    {user?.role === 'user' ? <RoleSelectionPage /> : <Navigate to="/" replace />}
+                </PrivateRoute>
+            } />
             <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
                 <Route index element={<DashboardPage />} />
                 <Route path="products" element={<ProductsPage />} />

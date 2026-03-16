@@ -5,6 +5,7 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
+    const [selectedRole, setSelectedRole] = useState(() => localStorage.getItem('selected_role'));
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -13,7 +14,7 @@ export function AuthProvider({ children }) {
         api.setToken(token);
         authApi.me()
             .then(data => setUser(data.user))
-            .catch(() => { api.setToken(null); })
+            .catch(() => { api.setToken(null); localStorage.removeItem('selected_role'); })
             .finally(() => setLoading(false));
     }, []);
 
@@ -24,13 +25,21 @@ export function AuthProvider({ children }) {
         return data.user;
     }, []);
 
+    const selectRole = useCallback((role) => {
+        setSelectedRole(role);
+        localStorage.setItem('selected_role', role);
+    }, []);
+
     const logout = useCallback(() => {
         api.setToken(null);
         setUser(null);
+        setSelectedRole(null);
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('selected_role');
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, selectedRole, selectRole }}>
             {children}
         </AuthContext.Provider>
     );
