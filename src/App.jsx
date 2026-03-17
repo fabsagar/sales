@@ -5,7 +5,15 @@ import Layout from './components/Layout.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RoleSelectionPage from './pages/RoleSelectionPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
-// ... rest of imports
+import ProductsPage from './pages/ProductsPage.jsx';
+import GalleryPage from './pages/GalleryPage.jsx';
+import OrdersPage from './pages/OrdersPage.jsx';
+import NewOrderPage from './pages/NewOrderPage.jsx';
+import OrderDetailPage from './pages/OrderDetailPage.jsx';
+import RetailersPage from './pages/RetailersPage.jsx';
+import ReportsPage from './pages/ReportsPage.jsx';
+import NotificationsPage from './pages/NotificationsPage.jsx';
+import UsersPage from './pages/UsersPage.jsx';
 
 function PrivateRoute({ children, roles }) {
     const { user, loading, selectedRole } = useAuth();
