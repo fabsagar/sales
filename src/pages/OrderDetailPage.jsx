@@ -17,7 +17,7 @@ function StatusBadge({ status }) {
 export default function OrderDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, activeRole } = useAuth();
     const [order, setOrder] = useState(null);
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -53,7 +53,7 @@ export default function OrderDetailPage() {
     if (loading) return <div className="flex justify-center py-20"><div className="spinner w-8 h-8 border-primary-500" /></div>;
     if (!order) return null;
 
-    const isAdmin = user.role === 'admin';
+    const isAdmin = activeRole === 'admin';
 
     return (
         <div className="animate-fade-in max-w-5xl">

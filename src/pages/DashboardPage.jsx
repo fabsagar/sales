@@ -48,7 +48,7 @@ function StatusBadge({ status }) {
 }
 
 export default function DashboardPage() {
-    const { user } = useAuth();
+    const { user, activeRole } = useAuth();
     const [summary, setSummary] = useState(null);
     const [recentOrders, setRecentOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -58,7 +58,7 @@ export default function DashboardPage() {
             try {
                 const ordersData = await ordersApi.list({ limit: 5 });
                 setRecentOrders(ordersData.orders || []);
-                if (user.role === 'admin') {
+                if (activeRole === 'admin') {
                     const summaryData = await reportsApi.summary();
                     setSummary(summaryData.summary);
                 }
@@ -86,7 +86,7 @@ export default function DashboardPage() {
                     </h1>
                     <p className="text-slate-400 text-sm mt-1">Here's what's happening with your sales today.</p>
                 </div>
-                {['admin', 'salesperson'].includes(user.role) && (
+                {['admin', 'salesperson'].includes(activeRole) && (
                     <Link to="/orders/new" className="btn-primary">
                         <PlusCircle size={16} /> New Order
                     </Link>
@@ -94,7 +94,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Admin stats */}
-            {user.role === 'admin' && summary && (
+            {activeRole === 'admin' && summary && (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <StatCard icon={DollarSign} label="Total Revenue" value={formatCurrency(summary.total_revenue)} color="primary" />
                     <StatCard icon={TrendingUp} label="Total Profit" value={formatCurrency(summary.total_profit)} color="emerald" />
@@ -104,7 +104,7 @@ export default function DashboardPage() {
             )}
 
             {/* Salesperson quick stats */}
-            {user.role === 'salesperson' && (
+            {activeRole === 'salesperson' && (
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                     <StatCard icon={ShoppingCart} label="My Orders" value={recentOrders.length} color="primary" />
                     <StatCard icon={CheckCircle} label="Approved" value={recentOrders.filter(o => o.status === 'approved').length} color="emerald" />
@@ -124,7 +124,7 @@ export default function DashboardPage() {
                     <div className="text-center py-12 text-slate-500">
                         <ShoppingCart size={40} className="mx-auto mb-3 opacity-30" />
                         <p>No orders yet.</p>
-                        {['admin', 'salesperson'].includes(user.role) && (
+                        {['admin', 'salesperson'].includes(activeRole) && (
                             <Link to="/orders/new" className="btn-primary mt-4 inline-flex">Create first order</Link>
                         )}
                     </div>
@@ -135,9 +135,9 @@ export default function DashboardPage() {
                                 <tr>
                                     <th>Order #</th>
                                     <th>Shop</th>
-                                    {user.role === 'admin' && <th>Salesperson</th>}
+                                    {activeRole === 'admin' && <th>Salesperson</th>}
                                     <th>Amount</th>
-                                    {user.role === 'admin' && <th>Profit</th>}
+                                    {activeRole === 'admin' && <th>Profit</th>}
                                     <th>Status</th>
                                     <th>Date</th>
                                 </tr>
@@ -147,9 +147,9 @@ export default function DashboardPage() {
                                     <tr key={order.id}>
                                         <td><Link to={`/orders/${order.id}`} className="text-primary-400 hover:text-primary-300 font-medium">#{order.id}</Link></td>
                                         <td>{order.retailer_name}</td>
-                                        {user.role === 'admin' && <td>{order.salesperson_name}</td>}
+                                        {activeRole === 'admin' && <td>{order.salesperson_name}</td>}
                                         <td className="font-medium text-white">{formatCurrency(order.total_amount)}</td>
-                                        {user.role === 'admin' && <td className="text-emerald-400">{formatCurrency(order.total_profit)}</td>}
+                                        {activeRole === 'admin' && <td className="text-emerald-400">{formatCurrency(order.total_profit)}</td>}
                                         <td><StatusBadge status={order.status} /></td>
                                         <td className="text-slate-500">{formatDate(order.created_at)}</td>
                                     </tr>

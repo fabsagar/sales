@@ -38,8 +38,10 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('selected_role');
     }, []);
 
+    const activeRole = user?.role === 'user' ? selectedRole : user?.role;
+
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, selectedRole, selectRole }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, selectedRole, selectRole, activeRole }}>
             {children}
         </AuthContext.Provider>
     );

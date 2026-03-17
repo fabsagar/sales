@@ -162,7 +162,7 @@ function ProductModal({ product, onClose, onSaved }) {
 }
 
 export default function ProductsPage() {
-    const { user } = useAuth();
+    const { user, activeRole } = useAuth();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -191,7 +191,7 @@ export default function ProductsPage() {
         finally { setDeleting(null); }
     };
 
-    const isAdmin = user.role === 'admin';
+    const isAdmin = activeRole === 'admin';
 
     return (
         <div className="animate-fade-in">

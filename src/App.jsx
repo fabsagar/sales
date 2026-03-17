@@ -21,7 +21,10 @@ function PrivateRoute({ children, roles }) {
 
     // Handle 'user' role switcher
     if (user.role === 'user' && !selectedRole) {
-        return <Navigate to="/select-role" replace />;
+        // Only redirect if not already on the select-role page
+        if (window.location.pathname !== '/select-role') {
+            return <Navigate to="/select-role" replace />;
+        }
     }
 
     const activeRole = user.role === 'user' ? selectedRole : user.role;

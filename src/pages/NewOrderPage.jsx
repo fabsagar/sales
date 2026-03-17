@@ -101,7 +101,8 @@ export default function NewOrderPage() {
         return acc;
     }, { amount: 0, profit: 0, items: 0 });
 
-    const isAdmin = useAuth().user.role === 'admin';
+    const { activeRole } = useAuth();
+    const isAdmin = activeRole === 'admin';
 
     const handleSubmit = async (e) => {
         e.preventDefault();

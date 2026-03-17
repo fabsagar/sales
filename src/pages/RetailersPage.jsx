@@ -69,13 +69,13 @@ function ShopModal({ retailer, onClose, onSaved }) {
 }
 
 export default function ShopsPage() {
-    const { user } = useAuth();
+    const { user, activeRole } = useAuth();
     const [retailers, setShops] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [modal, setModal] = useState(null);
     const [deleting, setDeleting] = useState(null);
-    const isAdmin = user.role === 'admin';
+    const isAdmin = activeRole === 'admin';
 
     const fetchShops = useCallback(async () => {
         setLoading(true);

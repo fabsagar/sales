@@ -13,7 +13,7 @@ function StatusBadge({ status }) {
 }
 
 export default function OrdersPage() {
-    const { user } = useAuth();
+    const { user, activeRole } = useAuth();
     const [orders, setOrders] = useState([]);
     const [pagination, setPagination] = useState({});
     const [loading, setLoading] = useState(true);
@@ -53,7 +53,7 @@ export default function OrdersPage() {
         finally { setExporting(false); }
     };
 
-    const isAdmin = user.role === 'admin';
+    const isAdmin = activeRole === 'admin';
 
     return (
         <div className="animate-fade-in">

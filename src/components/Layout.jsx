@@ -34,13 +34,12 @@ const NAV_ITEMS = {
 };
 
 export default function Layout() {
-    const { user, logout, selectedRole } = useAuth();
+    const { user, logout, activeRole } = useAuth();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const pollRef = useRef(null);
 
-    const activeRole = user?.role === 'user' ? selectedRole : user?.role;
     const navItems = NAV_ITEMS[activeRole] || [];
 
     // Polling notifications every 8 seconds

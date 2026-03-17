@@ -166,7 +166,7 @@ function SortableProductCard({
 
 export default function GalleryPage() {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, activeRole } = useAuth();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -398,7 +398,7 @@ export default function GalleryPage() {
         });
     };
 
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = activeRole === 'admin';
 
     return (
         <div className="animate-fade-in pb-20">
