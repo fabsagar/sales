@@ -77,18 +77,19 @@ export default function OrderDetailPage() {
             </div>
 
             {/* Order Info Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div className="section-card">
                     <p className="text-xs text-slate-500 mb-1">Shop</p>
                     <p className="font-bold text-white">{order.retailer_name}</p>
                     {order.retailer_email && <p className="text-xs text-slate-400 mt-1">{order.retailer_email}</p>}
                     {order.retailer_phone && <p className="text-xs text-slate-400">{order.retailer_phone}</p>}
                     {order.retailer_address && <p className="text-xs text-slate-500 mt-1">{order.retailer_address}</p>}
-                </div>
-                <div className="section-card">
-                    <p className="text-xs text-slate-500 mb-1">Salesperson</p>
-                    <p className="font-bold text-white">{order.salesperson_name}</p>
-                    {order.notes && <p className="text-xs text-slate-400 mt-2 italic">"{order.notes}"</p>}
+                    {order.notes && (
+                        <div className="mt-4 pt-3 border-t border-surface-700/50">
+                            <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Notes</p>
+                            <p className="text-xs text-slate-400 italic">"{order.notes}"</p>
+                        </div>
+                    )}
                 </div>
                 <div className="section-card">
                     <div className="space-y-3">

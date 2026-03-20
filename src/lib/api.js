@@ -85,6 +85,7 @@ export const productsApi = {
     create: (data) => api.post('/products', data),
     update: (id, data) => api.put(`/products/${id}`, data),
     delete: (id) => api.delete(`/products/${id}`),
+    addStock: (id, data) => api.post(`/products/${id}/stock`, data),
     categories: () => api.get('/products/categories'),
 };
 

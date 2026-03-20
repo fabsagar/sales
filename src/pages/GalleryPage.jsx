@@ -116,34 +116,35 @@ function SortableProductCard({
                     {product.name}
                 </h3>
 
-                <div className="mt-auto pt-4 flex items-center justify-between gap-4">
-                    <div className="flex-1">
-                        <p className="text-[10px] text-slate-500 mb-0.5 font-medium">Sales Price (₹)</p>
+                <div className="mt-auto pt-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
+                    <div className="flex-1 w-full">
+                        <p className="text-[10px] text-slate-500 mb-1 font-medium italic">Sales Price (₹)</p>
                         <input
                             type="number"
                             step="0.01"
                             min="0"
-                            className={`w-full bg-surface-900 border rounded-lg px-2 py-1 text-sm font-bold text-white focus:ring-1 focus:ring-primary-500/50 outline-none ${!isAdmin && cartItem.price && parseFloat(cartItem.price) < product.purchase_price ? 'border-red-500 text-red-500 animate-pulse' : 'border-surface-700/50'}`}
+                            className={`w-full bg-surface-900 border rounded-xl px-3 py-2 text-sm font-bold text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all ${!isAdmin && cartItem.price && parseFloat(cartItem.price) < product.purchase_price ? 'border-red-500 text-red-500 animate-pulse' : 'border-surface-700/50 hover:border-surface-600'}`}
                             value={cartItem.price}
+                            placeholder={product.default_selling_price || '0.00'}
                             onChange={(e) => onUpdatePrice(product.id, e.target.value)}
                             onClick={(e) => e.stopPropagation()}
                         />
                     </div>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-center sm:justify-end gap-1">
                         {cartItem.qty > 0 ? (
-                            <div className="flex items-center bg-surface-900 rounded-2xl p-1 border border-surface-700">
+                            <div className="flex items-center bg-surface-900 rounded-2xl p-1 border border-surface-700 w-full sm:w-auto justify-between sm:justify-start">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onRemoveFromCart(product.id); }}
-                                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-surface-800 text-white hover:bg-surface-700 transition-colors"
+                                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-surface-800 text-white hover:bg-surface-700 transition-colors"
                                 >
                                     <Minus size={14} />
                                 </button>
-                                <span className="w-8 text-center font-bold text-white">{cartItem.qty}</span>
+                                <span className="px-4 text-center font-bold text-white text-sm">{cartItem.qty}</span>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
                                     disabled={cartItem.qty >= product.stock_quantity}
-                                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-primary-600 text-white hover:bg-primary-500 transition-colors disabled:opacity-50"
+                                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-primary-600 text-white hover:bg-primary-500 transition-colors disabled:opacity-50"
                                 >
                                     <Plus size={14} />
                                 </button>
@@ -152,9 +153,10 @@ function SortableProductCard({
                             <button
                                 onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
                                 disabled={product.stock_quantity <= 0}
-                                className="w-12 h-12 flex items-center justify-center rounded-2xl bg-surface-900 text-white border border-surface-700 hover:bg-primary-600 hover:border-primary-500 hover:shadow-lg hover:shadow-primary-900/30 transition-all transform hover:-translate-y-1 disabled:opacity-50"
+                                className="w-full sm:w-12 h-11 sm:h-12 flex items-center justify-center rounded-2xl bg-surface-900 text-white border border-surface-700 hover:bg-primary-600 hover:border-primary-500 hover:shadow-lg hover:shadow-primary-900/30 transition-all transform hover:-translate-y-1 disabled:opacity-50 gap-2 sm:gap-0"
                             >
                                 <Plus size={20} />
+                                <span className="sm:hidden font-bold text-sm">Add to Cart</span>
                             </button>
                         )}
                     </div>
@@ -168,6 +170,12 @@ export default function GalleryPage() {
     const navigate = useNavigate();
     const { user, activeRole } = useAuth();
     const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState('All');
+    const [gridCols, setGridCols] = useState(() => {
+        const saved = localStorage.getItem(`gallery_grid_${user.id}`);
+        return saved ? parseInt(saved) : 2;
+    });
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [retailers, setRetailers] = useState([]);
@@ -201,16 +209,17 @@ export default function GalleryPage() {
         })
     );
 
-
     const fetchProducts = useCallback(async () => {
         setLoading(true);
         try {
-            const [pData, rData] = await Promise.all([
+            const [pData, rData, cData] = await Promise.all([
                 productsApi.list({ search, limit: 100 }),
-                retailersApi.list()
+                retailersApi.list(),
+                productsApi.categories()
             ]);
 
             setRetailers(rData.retailers || []);
+            setCategories(['All', ...(cData.categories || [])]);
 
             let sorted = pData.products || [];
 
@@ -398,124 +407,181 @@ export default function GalleryPage() {
         });
     };
 
-    const isAdmin = activeRole === 'admin';
+    const filteredProducts = products.filter(p =>
+        selectedCategory === 'All' || p.category === selectedCategory
+    );
+
+    const getGridClass = () => {
+        if (gridCols === 1) return 'grid-cols-1 max-w-xl mx-auto';
+        if (gridCols === 2) return 'grid-cols-2 lg:grid-cols-2';
+        return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4';
+    };
 
     return (
-        <div className="animate-fade-in pb-20">
-            <div className="page-header sticky top-0 bg-surface-900/80 backdrop-blur-md z-10 py-4 mb-6">
-                <div>
-                    <h1 className="page-title">Product Gallery</h1>
-                    <p className="text-slate-400 text-sm mt-1">Quickly add products to your next order</p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="relative max-w-xs hidden xl:flex items-center gap-2">
-                        <Building2 size={16} className="text-slate-500" />
-                        <select
-                            className="bg-surface-800 border border-surface-700/50 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:ring-1 focus:ring-primary-500 min-w-[150px]"
-                            value={selectedShop}
-                            onChange={(e) => setSelectedShop(e.target.value)}
-                        >
-                            <option value="">-- Generic Shop --</option>
-                            {retailers.map(r => (
-                                <option key={r.id} value={r.id}>{r.name}</option>
+        <div className="pb-20">
+            <div className="animate-fade-in">
+                <div className="page-header sticky top-0 bg-surface-900/80 backdrop-blur-md z-30 py-4 mb-6">
+                    <div>
+                        <h1 className="page-title">Product Gallery</h1>
+                        <p className="text-slate-400 text-sm mt-1">Quickly add products to your next order</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {/* Grid Switcher */}
+                        <div className="hidden md:flex items-center bg-surface-800 rounded-lg p-1 border border-surface-700/50 mr-4">
+                            {[1, 2, 4].map(cols => (
+                                <button
+                                    key={cols}
+                                    onClick={() => {
+                                        setGridCols(cols);
+                                        localStorage.setItem(`gallery_grid_${user.id}`, cols);
+                                    }}
+                                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${gridCols === cols ? 'bg-primary-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                                >
+                                    {cols === 1 ? '1 x 1' : cols === 2 ? '2 x 2' : '4 x 4'}
+                                </button>
                             ))}
-                        </select>
-                    </div>
-                    <div className="relative max-w-xs hidden sm:block">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                        <input
-                            className="input pl-9 h-10 py-0"
-                            placeholder="Search products..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                        />
-                    </div>
-                    <button
-                        onClick={goToOrder}
-                        className="btn-primary relative"
-                    >
-                        <ShoppingCart size={18} />
-                        <span className="hidden sm:inline">Go to Cart</span>
-                        {cartTotalItems > 0 && (
-                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-surface-900 animate-bounce">
-                                {cartTotalItems}
-                            </span>
-                        )}
-                    </button>
-                </div>
-            </div>
-
-            <div className="sm:hidden mb-6 space-y-4">
-                <div className="xl:hidden flex items-center gap-2 bg-surface-800/50 p-3 rounded-2xl border border-surface-700/50">
-                    <Building2 size={18} className="text-primary-500" />
-                    <select
-                        className="flex-1 bg-transparent text-sm text-white outline-none"
-                        value={selectedShop}
-                        onChange={(e) => setSelectedShop(e.target.value)}
-                    >
-                        <option value="">Select Shop (Optional)</option>
-                        {retailers.map(r => (
-                            <option key={r.id} value={r.id}>{r.name}</option>
-                        ))}
-                    </select>
-                </div>
-                <div className="relative">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                    <input
-                        className="input pl-9"
-                        placeholder="Search products..."
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                    />
-                </div>
-            </div>
-
-            {loading ? (
-                <div className="flex flex-col items-center justify-center py-40 gap-4">
-                    <Loader2 size={40} className="text-primary-500 animate-spin" />
-                    <p className="text-slate-500 animate-pulse">Loading gallery...</p>
-                </div>
-            ) : products.length === 0 ? (
-                <div className="section-card text-center py-20 bg-surface-950/30 border-dashed border-2 border-surface-700">
-                    <Package size={64} className="mx-auto mb-4 text-slate-700" />
-                    <h3 className="text-xl font-bold text-white mb-2">No Products Found</h3>
-                    <p className="text-slate-500">Try adjusting your search terms</p>
-                </div>
-            ) : (
-                <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                >
-                    <SortableContext
-                        items={products.map(p => p.id)}
-                        strategy={rectSortingStrategy}
-                    >
-                        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                            {products.map(product => {
-                                const cartItem = cart[product.id] || { qty: 0, price: '' };
-                                return (
-                                    <SortableProductCard
-                                        key={product.id}
-                                        product={product}
-                                        cartItem={cartItem}
-                                        isSelected={selectedProductIds.includes(product.id)}
-                                        onSelect={toggleSelection}
-                                        onAddToCart={addToCart}
-                                        onRemoveFromCart={removeFromCart}
-                                        onUpdatePrice={updateCartPrice}
-                                        isAdmin={isAdmin}
-                                    />
-                                );
-                            })}
                         </div>
-                    </SortableContext>
-                </DndContext>
-            )}
+
+                        <div className="relative max-w-xs hidden xl:flex items-center gap-2">
+                            <Building2 size={16} className="text-slate-500" />
+                            <select
+                                className="bg-surface-800 border border-surface-700/50 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:ring-1 focus:ring-primary-500 min-w-[150px]"
+                                value={selectedShop}
+                                onChange={(e) => setSelectedShop(e.target.value)}
+                            >
+                                <option value="">-- Generic Shop --</option>
+                                {retailers.map(r => (
+                                    <option key={r.id} value={r.id}>{r.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="relative max-w-xs hidden sm:block">
+                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                            <input
+                                className="input pl-9 h-10 py-0"
+                                placeholder="Search products..."
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                            />
+                        </div>
+                        <button
+                            onClick={goToOrder}
+                            className="btn-primary relative"
+                        >
+                            <ShoppingCart size={18} />
+                            <span className="hidden sm:inline">Go to Cart</span>
+                            {cartTotalItems > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-surface-900 animate-bounce">
+                                    {cartTotalItems}
+                                </span>
+                            )}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Category Filter & Mobile Controls */}
+                <div className="mb-8 space-y-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                        {categories.map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setSelectedCategory(cat)}
+                                className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all border ${selectedCategory === cat
+                                    ? 'bg-primary-600 border-primary-500 text-white shadow-lg shadow-primary-900/20'
+                                    : 'bg-surface-800 border-surface-700/50 text-slate-400 hover:border-surface-600 hover:text-white'
+                                    }`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="sm:hidden flex flex-col gap-3">
+                        <div className="xl:hidden flex items-center gap-2 bg-surface-800/50 p-3 rounded-2xl border border-surface-700/50">
+                            <Building2 size={18} className="text-primary-500" />
+                            <select
+                                className="flex-1 bg-transparent text-sm text-white outline-none"
+                                value={selectedShop}
+                                onChange={(e) => setSelectedShop(e.target.value)}
+                            >
+                                <option value="">Select Shop (Optional)</option>
+                                {retailers.map(r => (
+                                    <option key={r.id} value={r.id}>{r.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="relative flex-1">
+                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                                <input
+                                    className="input pl-9"
+                                    placeholder="Search products..."
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex items-center bg-surface-800 rounded-xl p-1 border border-surface-700/50">
+                                {[1, 2].map(cols => (
+                                    <button
+                                        key={cols}
+                                        onClick={() => setGridCols(cols)}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${gridCols === cols ? 'bg-primary-600 text-white' : 'text-slate-500'}`}
+                                    >
+                                        {cols}x
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-40 gap-4">
+                        <Loader2 size={40} className="text-primary-500 animate-spin" />
+                        <p className="text-slate-500 animate-pulse">Loading gallery...</p>
+                    </div>
+                ) : filteredProducts.length === 0 ? (
+                    <div className="section-card text-center py-20 bg-surface-950/30 border-dashed border-2 border-surface-700">
+                        <Package size={64} className="mx-auto mb-4 text-slate-700" />
+                        <h3 className="text-xl font-bold text-white mb-2">No Products Found</h3>
+                        <p className="text-slate-500">Try adjusting your filters or search terms</p>
+                    </div>
+                ) : (
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={filteredProducts.map(p => p.id)}
+                            strategy={rectSortingStrategy}
+                        >
+                            <div className={`grid gap-6 ${getGridClass()}`}>
+                                {filteredProducts.map(product => {
+                                    const cartItem = cart[product.id] || { qty: 0, price: '' };
+                                    return (
+                                        <SortableProductCard
+                                            key={product.id}
+                                            product={product}
+                                            cartItem={cartItem}
+                                            isSelected={selectedProductIds.includes(product.id)}
+                                            onSelect={toggleSelection}
+                                            onAddToCart={addToCart}
+                                            onRemoveFromCart={removeFromCart}
+                                            onUpdatePrice={updateCartPrice}
+                                            isAdmin={isAdmin}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
+                )}
+            </div>
 
             {/* Mobile Bottom Bar for Cart */}
             {cartTotalItems > 0 && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-sm animate-slide-up sm:hidden">
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-sm animate-slide-up sm:hidden">
                     <button
                         onClick={goToOrder}
                         className="w-full bg-primary-600 hover:bg-primary-500 text-white py-4 px-6 rounded-3xl font-bold flex items-center justify-between shadow-2xl shadow-primary-900/50 border border-primary-500/50"

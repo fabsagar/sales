@@ -76,6 +76,7 @@ export default function ShopsPage() {
     const [modal, setModal] = useState(null);
     const [deleting, setDeleting] = useState(null);
     const isAdmin = activeRole === 'admin';
+    const canManage = activeRole === 'admin' || activeRole === 'salesperson';
 
     const fetchShops = useCallback(async () => {
         setLoading(true);
@@ -106,7 +107,7 @@ export default function ShopsPage() {
                     <h1 className="page-title">Shops</h1>
                     <p className="text-slate-400 text-sm mt-1">{retailers.length} registered retailers</p>
                 </div>
-                {isAdmin && (
+                {canManage && (
                     <button onClick={() => setModal('create')} className="btn-primary">
                         <Plus size={16} /> Add Shop
                     </button>
@@ -124,7 +125,7 @@ export default function ShopsPage() {
                 <div className="section-card text-center py-16">
                     <Building2 size={48} className="mx-auto mb-4 text-slate-600" />
                     <p className="text-slate-400 font-medium">No retailers found</p>
-                    {isAdmin && <button onClick={() => setModal('create')} className="btn-primary mt-4">Add First Shop</button>}
+                    {canManage && <button onClick={() => setModal('create')} className="btn-primary mt-4">Add First Shop</button>}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -134,12 +135,14 @@ export default function ShopsPage() {
                                 <div className="w-10 h-10 bg-emerald-500/15 border border-emerald-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
                                     <Building2 size={18} className="text-emerald-400" />
                                 </div>
-                                {isAdmin && (
+                                {canManage && (
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => setModal(retailer)} className="btn-icon btn-sm"><Edit2 size={13} /></button>
-                                        <button onClick={() => handleDelete(retailer)} disabled={deleting === retailer.id} className="btn-icon btn-sm text-red-400 hover:text-white hover:bg-red-600">
-                                            {deleting === retailer.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                                        </button>
+                                        {isAdmin && (
+                                            <button onClick={() => handleDelete(retailer)} disabled={deleting === retailer.id} className="btn-icon btn-sm text-red-400 hover:text-white hover:bg-red-600">
+                                                {deleting === retailer.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>

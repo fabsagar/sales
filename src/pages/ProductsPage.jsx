@@ -7,16 +7,56 @@ import toast from 'react-hot-toast';
 
 const EMPTY_FORM = { name: '', description: '', category: '', purchase_price: '', default_selling_price: '', stock_quantity: '', image_url: '' };
 
-function ProductModal({ product, onClose, onSaved }) {
+function ProductModal({ product, onClose, onSaved, existingProducts = [] }) {
     const [form, setForm] = useState(product ? {
         name: product.name, description: product.description || '', category: product.category || '',
         purchase_price: product.purchase_price, default_selling_price: product.default_selling_price || '',
-        stock_quantity: product.stock_quantity, image_url: product.image_url || '',
+        stock_quantity: '', // Default empty for new batch
+        image_url: product.image_url || '',
     } : EMPTY_FORM);
     const [saving, setSaving] = useState(false);
     const [imagePreview, setImagePreview] = useState(product?.image_url || null);
     const [uploading, setUploading] = useState(false);
+    const [selectedProductId, setSelectedProductId] = useState(product?.id || null);
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
     const fileInputRef = useRef(null);
+    const suggestionRef = useRef(null);
+
+    // Handle name change for autocomplete
+    const handleNameChange = (e) => {
+        const value = e.target.value;
+        setForm(f => ({ ...f, name: value }));
+        setSelectedProductId(null); // Reset if user types manually
+
+        if (value.trim().length > 1 && !product) {
+            const matches = existingProducts.filter(p => 
+                p.name.toLowerCase().includes(value.toLowerCase())
+            ).slice(0, 5);
+            setSuggestions(matches);
+            setShowSuggestions(true);
+        } else {
+            setSuggestions([]);
+            setShowSuggestions(false);
+        }
+    };
+
+    const selectProduct = (p) => {
+        setForm({
+            name: p.name,
+            description: p.description || '',
+            category: p.category || '',
+            purchase_price: '', // Let user enter new batch price
+            default_selling_price: p.default_selling_price || '',
+            stock_quantity: '', // Let user enter new batch quantity
+            image_url: p.image_url || '',
+        });
+        setImagePreview(p.image_url);
+        setSelectedProductId(p.id);
+        setSuggestions([]);
+        setShowSuggestions(false);
+        toast.success(`Selected existing product: ${p.name}`);
+    };
 
     const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
@@ -27,12 +67,10 @@ function ProductModal({ product, onClose, onSaved }) {
             toast.error('Image must be under 5MB');
             return;
         }
-        // Show local preview immediately
         const reader = new FileReader();
         reader.onload = (ev) => setImagePreview(ev.target.result);
         reader.readAsDataURL(file);
 
-        // Upload to R2
         setUploading(true);
         try {
             const url = await uploadImage(file);
@@ -48,8 +86,8 @@ function ProductModal({ product, onClose, onSaved }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!form.name || !form.purchase_price) {
-            toast.error('Product name and purchase price are required'); return;
+        if (!form.name || !form.purchase_price || !form.stock_quantity) {
+            toast.error('Name, quantity and purchase price are required'); return;
         }
         setSaving(true);
         try {
@@ -58,14 +96,24 @@ function ProductModal({ product, onClose, onSaved }) {
                 purchase_price: +form.purchase_price,
                 default_selling_price: form.default_selling_price !== '' ? +form.default_selling_price : null,
                 stock_quantity: +form.stock_quantity || 0,
-                category: form.category || '',
+                quantity: +form.stock_quantity || 0, // for addStock endpoint
             };
-            if (product) {
+
+            if (selectedProductId && !product) {
+                // Add stock to existing
+                await productsApi.addStock(selectedProductId, {
+                    quantity: data.stock_quantity,
+                    purchase_price: data.purchase_price
+                });
+                toast.success('Stock added to existing product');
+            } else if (product) {
+                // Edit existing product details (not batch addition)
                 await productsApi.update(product.id, data);
-                toast.success('Product updated');
+                toast.success('Product details updated');
             } else {
+                // Create brand new product
                 await productsApi.create(data);
-                toast.success('Product created');
+                toast.success('New product created');
             }
             onSaved();
             onClose();
@@ -80,26 +128,70 @@ function ProductModal({ product, onClose, onSaved }) {
         ? ((+form.default_selling_price - +form.purchase_price) / +form.purchase_price * 100).toFixed(1)
         : null;
 
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (suggestionRef.current && !suggestionRef.current.contains(e.target)) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     return (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-            <div className="modal-box">
+            <div className="modal-box max-w-lg">
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-bold text-white">{product ? 'Edit Product' : 'Add Product'}</h2>
+                    <h2 className="text-lg font-bold text-white">
+                        {product ? 'Edit Product Details' : selectedProductId ? 'Add Stock to Existing' : 'Add New Product'}
+                    </h2>
                     <button onClick={onClose} className="btn-icon"><X size={16} /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="sm:col-span-2">
+                        <div className="sm:col-span-2 relative">
                             <label className="block text-xs font-medium text-slate-400 mb-1.5">Product Name *</label>
-                            <input name="name" className="input" value={form.name} onChange={handleChange} placeholder="e.g. Premium Laptop" required />
+                            <input 
+                                name="name" 
+                                className="input" 
+                                value={form.name} 
+                                onChange={handleNameChange} 
+                                placeholder="e.g. Premium Laptop" 
+                                required 
+                                autoComplete="off"
+                                disabled={!!product}
+                            />
+                            {showSuggestions && suggestions.length > 0 && (
+                                <div ref={suggestionRef} className="absolute z-50 left-0 right-0 mt-1 bg-surface-800 border border-surface-700 rounded-xl shadow-2xl overflow-hidden animate-slide-up">
+                                    {suggestions.map(p => (
+                                        <button
+                                            key={p.id}
+                                            type="button"
+                                            onClick={() => selectProduct(p)}
+                                            className="w-full px-4 py-3 text-left hover:bg-surface-700 flex items-center gap-3 transition-colors border-b border-surface-700/50 last:border-0"
+                                        >
+                                            <div className="w-8 h-8 rounded bg-surface-600 flex items-center justify-center flex-shrink-0">
+                                                {p.image_url ? <img src={p.image_url} className="w-full h-full object-cover rounded" /> : <Package size={14} />}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-white">{p.name}</p>
+                                                <p className="text-[10px] text-slate-500">{p.category || 'No category'}</p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
+
                         <div>
                             <label className="block text-xs font-medium text-slate-400 mb-1.5">Category</label>
-                            <input name="category" className="input" value={form.category} onChange={handleChange} placeholder="Electronics (optional)" />
+                            <input name="category" className="input" value={form.category} onChange={handleChange} placeholder="Electronics" />
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-slate-400 mb-1.5">Stock Quantity</label>
-                            <input name="stock_quantity" type="number" min="0" className="input" value={form.stock_quantity} onChange={handleChange} placeholder="0" />
+                            <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                                {selectedProductId || product ? 'Add Stock Balance' : 'Initial Stock Quantity'} *
+                            </label>
+                            <input name="stock_quantity" type="number" min="1" className="input" value={form.stock_quantity} onChange={handleChange} placeholder="0" required />
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-slate-400 mb-1.5">Purchase Price (₹) *</label>
@@ -107,24 +199,26 @@ function ProductModal({ product, onClose, onSaved }) {
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                                Selling Price (₹)
+                                Default Selling Price (₹)
                                 {profit && <span className="ml-2 text-emerald-400">({profit}% margin)</span>}
                             </label>
-                            <input name="default_selling_price" type="number" min="0" step="0.01" className="input" value={form.default_selling_price} onChange={handleChange} placeholder="0.00 (optional)" />
+                            <input name="default_selling_price" type="number" min="0" step="0.01" className="input" value={form.default_selling_price} onChange={handleChange} placeholder="0.00" />
                         </div>
+
                         <div className="sm:col-span-2">
                             <label className="block text-xs font-medium text-slate-400 mb-1.5">Description</label>
-                            <textarea name="description" className="input resize-none" rows={2} value={form.description} onChange={handleChange} placeholder="Product description..." />
+                            <textarea name="description" className="input resize-none text-sm" rows={2} value={form.description} onChange={handleChange} placeholder="Product description..." />
                         </div>
+
                         <div className="sm:col-span-2">
                             <label className="block text-xs font-medium text-slate-400 mb-1.5">Product Image</label>
                             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                             {imagePreview ? (
-                                <div className="relative w-full h-40 rounded-xl overflow-hidden bg-surface-800 border border-surface-700">
+                                <div className="relative w-full h-32 rounded-xl overflow-hidden bg-surface-800 border border-surface-700">
                                     <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
                                     {uploading && (
                                         <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                            <Loader2 size={24} className="animate-spin text-white" />
+                                            <Loader2 size={18} className="animate-spin text-white" />
                                         </div>
                                     )}
                                     {!uploading && (
@@ -133,7 +227,7 @@ function ProductModal({ product, onClose, onSaved }) {
                                             onClick={() => { setImagePreview(null); setForm(f => ({ ...f, image_url: '' })); }}
                                             className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                                         >
-                                            <X size={14} />
+                                            <X size={12} />
                                         </button>
                                     )}
                                 </div>
@@ -141,10 +235,10 @@ function ProductModal({ product, onClose, onSaved }) {
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="w-full h-24 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-surface-600 rounded-xl text-slate-500 hover:border-primary-500 hover:text-primary-400 transition-colors"
+                                    className="w-full h-20 flex flex-col items-center justify-center gap-1 border-2 border-dashed border-surface-600 rounded-xl text-slate-500 hover:border-primary-500 hover:text-primary-400 transition-colors"
                                 >
-                                    <Upload size={22} />
-                                    <span className="text-xs">Click to upload image (max 2MB)</span>
+                                    <Upload size={18} />
+                                    <span className="text-[10px]">Click to upload product image</span>
                                 </button>
                             )}
                         </div>
@@ -152,7 +246,7 @@ function ProductModal({ product, onClose, onSaved }) {
                     <div className="flex gap-3 mt-6">
                         <button type="button" onClick={onClose} className="btn-secondary flex-1">Cancel</button>
                         <button type="submit" disabled={saving} className="btn-primary flex-1">
-                            {saving ? <><Loader2 size={14} className="animate-spin" /> Saving...</> : (product ? 'Update' : 'Create')}
+                            {saving ? <><Loader2 size={14} className="animate-spin" /> Saving...</> : (selectedProductId || product ? 'Save Stock / Update' : 'Create Product')}
                         </button>
                     </div>
                 </form>
@@ -295,6 +389,7 @@ export default function ProductsPage() {
             {modal && (
                 <ProductModal
                     product={modal === 'create' ? null : modal}
+                    existingProducts={products}
                     onClose={() => setModal(null)}
                     onSaved={fetchProducts}
                 />

@@ -12,7 +12,6 @@ export default function NewOrderPage() {
     const [retailers, setShops] = useState([]);
     const [products, setProducts] = useState([]);
     const [selectedShop, setSelectedShop] = useState('');
-    const [search, setSearch] = useState('');
     const [orderItems, setOrderItems] = useState([]); // [{product, quantity, selling_price}]
     const [notes, setNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -54,10 +53,6 @@ export default function NewOrderPage() {
     }, [location.state, productsApi, retailersApi]);
     // Note: removed unnecessary log/comment from previous failed attempt
 
-    const filtered = products.filter(p =>
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.category.toLowerCase().includes(search.toLowerCase())
-    );
 
     const updatePrice = (index, price) => {
         const newItems = [...orderItems];
@@ -65,21 +60,6 @@ export default function NewOrderPage() {
         setOrderItems(newItems);
     };
 
-    const addItem = (product) => {
-        const existing = orderItems.find(i => i.product.id === product.id);
-        if (existing) {
-            setOrderItems(items => items.map(i =>
-                i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
-            ));
-        } else {
-            setOrderItems(items => [...items, {
-                product,
-                quantity: 1,
-                selling_price: '',
-            }]);
-        }
-        toast.success(`${product.name} added`, { duration: 1500 });
-    };
 
     const updateItem = (productId, field, value) => {
         setOrderItems(items => items.map(i =>
@@ -154,8 +134,7 @@ export default function NewOrderPage() {
 
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
-                    {/* Left: Products */}
-                    <div className="xl:col-span-3 space-y-4">
+                    <div className="xl:col-span-2 space-y-4">
                         {/* Shop select */}
                         <div className="section-card">
                             <label className="block text-xs font-medium text-slate-400 mb-2">
@@ -174,53 +153,15 @@ export default function NewOrderPage() {
                             </select>
                         </div>
 
-                        {/* Product search */}
+                        {/* Notes */}
                         <div className="section-card">
-                            <h2 className="font-semibold text-white text-sm mb-3">Add Products</h2>
-                            <div className="relative mb-3">
-                                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                                <input className="input pl-9" placeholder="Search products..." value={search} onChange={e => setSearch(e.target.value)} />
-                            </div>
-                            <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-                                {filtered.length === 0 ? (
-                                    <p className="text-slate-500 text-sm text-center py-6">No products found</p>
-                                ) : filtered.map(product => (
-                                    <div key={product.id} className={`flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer
-                    ${product.stock_quantity < 1
-                                            ? 'border-surface-700/30 opacity-50 cursor-not-allowed'
-                                            : 'border-surface-700 hover:border-primary-500/50 hover:bg-surface-800/50'
-                                        }`}
-                                        onClick={() => product.stock_quantity > 0 && addItem(product)}
-                                    >
-                                        <div className="w-16 h-16 rounded-lg bg-surface-700 flex items-center justify-center flex-shrink-0 text-slate-500 overflow-hidden">
-                                            {product.image_url ? (
-                                                <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <ShoppingCart size={20} />
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-base font-semibold text-white truncate">{product.name}</p>
-                                            <p className="text-xs text-slate-500">{product.category} · Stock: {product.stock_quantity}</p>
-                                        </div>
-                                        <div className="text-right flex-shrink-0">
-                                            {isAdmin && <p className="text-base font-bold text-primary-400">{formatCurrency(product.default_selling_price)}</p>}
-                                            {isAdmin && <p className="text-[10px] text-slate-500">Cost: {formatCurrency(product.purchase_price)}</p>}
-                                        </div>
-                                        <button type="button" className="btn-primary btn-sm flex-shrink-0 px-2"
-                                            onClick={e => { e.stopPropagation(); product.stock_quantity > 0 && addItem(product); }}
-                                            disabled={product.stock_quantity < 1}
-                                        >
-                                            <Plus size={13} />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
+                            <label className="block text-xs text-slate-500 mb-1">Notes (optional)</label>
+                            <textarea className="input resize-none text-sm" rows={4} placeholder="Order notes..." value={notes} onChange={e => setNotes(e.target.value)} />
                         </div>
                     </div>
 
                     {/* Right: Cart */}
-                    <div className="xl:col-span-2">
+                    <div className="xl:col-span-3">
                         <div className="section-card sticky top-0">
                             <h2 className="font-semibold text-white mb-4 flex items-center gap-2">
                                 <ShoppingCart size={17} />
@@ -291,11 +232,6 @@ export default function NewOrderPage() {
                                 </div>
                             )}
 
-                            {/* Notes */}
-                            <div className="mt-3">
-                                <label className="block text-xs text-slate-500 mb-1">Notes (optional)</label>
-                                <textarea className="input resize-none text-sm" rows={2} placeholder="Order notes..." value={notes} onChange={e => setNotes(e.target.value)} />
-                            </div>
 
                             {/* Totals */}
                             {orderItems.length > 0 && (

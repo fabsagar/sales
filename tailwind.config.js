@@ -39,8 +39,13 @@ export default {
                 'slide-in': 'slideIn 0.3s ease-out',
                 'bounce-in': 'bounceIn 0.4s ease-out',
                 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                'slide-up': 'slideUp 0.4s ease-out',
             },
             keyframes: {
+                slideUp: {
+                    '0%': { transform: 'translateY(100%) translateX(-50%)', opacity: '0' },
+                    '100%': { transform: 'translateY(0) translateX(-50%)', opacity: '1' },
+                },
                 fadeIn: {
                     '0%': { opacity: '0', transform: 'translateY(-8px)' },
                     '100%': { opacity: '1', transform: 'translateY(0)' },
