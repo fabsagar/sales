@@ -16,7 +16,6 @@ const NAV_ITEMS = {
         { to: '/orders', icon: ShoppingCart, label: 'Orders' },
         { to: '/retailers', icon: Building2, label: 'Shops' },
         { to: '/reports', icon: TrendingUp, label: 'Reports' },
-        { to: '/users', icon: UserCog, label: 'Users' },
         { to: '/notifications', icon: Bell, label: 'Notifications' },
     ],
     salesperson: [
@@ -46,7 +45,7 @@ export default function Layout() {
     useEffect(() => {
         const poll = async () => {
             try {
-                const data = await notificationsApi.list({ unread: 'true', limit: 1 });
+                const data = await notificationsApi.list({ unread: 'true', limit: 1, target_role: activeRole });
                 setUnreadCount(data.unread_count || 0);
             } catch { }
         };

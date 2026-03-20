@@ -107,8 +107,8 @@ export default function DashboardPage() {
             {activeRole === 'salesperson' && (
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                     <StatCard icon={ShoppingCart} label="My Orders" value={recentOrders.length} color="primary" />
-                    <StatCard icon={CheckCircle} label="Approved" value={recentOrders.filter(o => o.status === 'approved').length} color="emerald" />
-                    <StatCard icon={Clock} label="Pending" value={recentOrders.filter(o => o.status === 'pending').length} color="amber" />
+                    <StatCard icon={CheckCircle} label="Success" value={recentOrders.filter(o => o.status === 'approved').length} color="emerald" />
+                    <StatCard icon={XCircle} label="Rejected" value={recentOrders.filter(o => o.status === 'rejected').length} color="red" />
                 </div>
             )}
 

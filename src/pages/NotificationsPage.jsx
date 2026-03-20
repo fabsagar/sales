@@ -12,6 +12,7 @@ const TYPE_STYLES = {
 };
 
 export default function NotificationsPage() {
+    const { activeRole } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -19,7 +20,7 @@ export default function NotificationsPage() {
 
     const fetchNotifications = async () => {
         try {
-            const data = await notificationsApi.list({ limit: 50 });
+            const data = await notificationsApi.list({ limit: 50, target_role: activeRole });
             setNotifications(data.notifications || []);
             setUnreadCount(data.unread_count || 0);
         } catch (err) { toast.error(err.message); }

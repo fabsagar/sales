@@ -158,18 +158,16 @@ export default function OrderDetailPage() {
             </div>
 
             {/* Admin Actions */}
-            {isAdmin && order.status === 'pending' && (
-                <div className="section-card no-print">
-                    <h2 className="font-semibold text-white mb-4">Order Actions</h2>
-                    <div className="flex gap-3">
-                        <button onClick={() => handleStatus('approved')} disabled={updating} className="btn-success flex-1 py-3">
-                            {updating ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-                            Approve Order
-                        </button>
-                        <button onClick={() => handleStatus('rejected')} disabled={updating} className="btn-danger flex-1 py-3">
-                            <XCircle size={16} /> Reject Order
-                        </button>
-                    </div>
+            {isAdmin && order.status === 'approved' && (
+                <div className="section-card no-print border-red-500/20 bg-red-500/5">
+                    <h2 className="font-semibold text-red-400 mb-4 flex items-center gap-2">
+                        <XCircle size={18} /> Danger Zone
+                    </h2>
+                    <p className="text-xs text-slate-400 mb-4">You can still reject this order if needed. This will restore the stock to the inventory.</p>
+                    <button onClick={() => handleStatus('rejected')} disabled={updating} className="btn-danger w-full py-3">
+                        {updating ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />}
+                        Reject & Cancel Order
+                    </button>
                 </div>
             )}
 
