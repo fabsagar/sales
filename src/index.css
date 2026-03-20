@@ -72,6 +72,16 @@
     @apply opacity-50 cursor-not-allowed;
   }
 
+  /* Remove number input spinners */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type=number] {
+    -moz-appearance: textfield;
+  }
+
   /* ===== Buttons ===== */
   .btn {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm
@@ -192,7 +202,20 @@
 
 /* ===== Print styles ===== */
 @media print {
+  @page {
+    margin: 0;
+    size: auto;
+  }
   .no-print { display: none !important; }
-  body { @apply bg-white text-black; }
-  .print-page { @apply bg-white text-black shadow-none; }
+  body { 
+    @apply bg-white text-black;
+    margin: 0;
+    padding: 0;
+  }
+  .print-page { 
+    @apply bg-white text-black shadow-none;
+    margin: 0 !important;
+    page-break-after: avoid;
+    page-break-before: avoid;
+  }
 }

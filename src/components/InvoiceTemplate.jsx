@@ -12,7 +12,7 @@ const InvoiceTemplate = forwardRef(function InvoiceTemplate({ order, items }, re
     const ifsc = import.meta.env.VITE_SHOP_IFSC || 'XXXX0000000';
 
     return (
-        <div ref={ref} className="print-page bg-white text-gray-900 p-8 max-w-4xl mx-auto" style={{ fontFamily: 'Arial, sans-serif', minHeight: '297mm' }}>
+        <div ref={ref} className="print-page bg-white text-gray-900 p-8 max-w-4xl mx-auto" style={{ fontFamily: 'Arial, sans-serif' }}>
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px', paddingBottom: '24px', borderBottom: '1px solid #e5e7eb' }}>
                 <div style={{ textAlign: 'left' }}>
