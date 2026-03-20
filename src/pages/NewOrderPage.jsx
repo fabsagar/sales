@@ -9,6 +9,8 @@ import toast from 'react-hot-toast';
 export default function NewOrderPage() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { user, activeRole } = useAuth();
+    const isAdmin = activeRole === 'admin';
     const [retailers, setShops] = useState([]);
     const [products, setProducts] = useState([]);
     const [selectedShop, setSelectedShop] = useState('');
@@ -81,8 +83,6 @@ export default function NewOrderPage() {
         return acc;
     }, { amount: 0, profit: 0, items: 0 });
 
-    const { activeRole } = useAuth();
-    const isAdmin = activeRole === 'admin';
 
     const handleSubmit = async (e) => {
         e.preventDefault();

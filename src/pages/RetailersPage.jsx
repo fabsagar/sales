@@ -76,7 +76,7 @@ export default function ShopsPage() {
     const [modal, setModal] = useState(null);
     const [deleting, setDeleting] = useState(null);
     const isAdmin = activeRole === 'admin';
-    const canManage = activeRole === 'admin' || activeRole === 'salesperson';
+    const canManage = activeRole === 'admin' || activeRole === 'salesperson' || activeRole === 'user';
 
     const fetchShops = useCallback(async () => {
         setLoading(true);

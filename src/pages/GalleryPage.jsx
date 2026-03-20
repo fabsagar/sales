@@ -169,6 +169,7 @@ function SortableProductCard({
 export default function GalleryPage() {
     const navigate = useNavigate();
     const { user, activeRole } = useAuth();
+    const isAdmin = activeRole === 'admin';
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('All');
