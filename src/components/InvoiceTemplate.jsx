@@ -20,7 +20,12 @@ const InvoiceTemplate = forwardRef(function InvoiceTemplate({ order, items }, re
                     <div style={{ fontSize: '14px', color: '#374151' }}>Account No: {accountNo}</div>
                     <div style={{ fontSize: '14px', color: '#374151' }}>IFSC: {ifsc}</div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    <img 
+                        src="/qr-code.jpeg" 
+                        alt="QR Code" 
+                        style={{ width: '80px', height: '80px', marginBottom: '12px', objectFit: 'contain' }} 
+                    />
                     <div style={{ fontSize: '20px', fontWeight: '700', color: '#111827' }}>Invoice #{String(order.id).padStart(5, '0')}</div>
                     <div style={{ fontSize: '14px', color: '#374151', marginTop: '4px' }}>Date: {formatDate(order.created_at)}</div>
                 </div>
