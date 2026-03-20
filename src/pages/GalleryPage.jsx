@@ -116,8 +116,8 @@ function SortableProductCard({
                     {product.name}
                 </h3>
 
-                <div className="mt-auto pt-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
-                    <div className="flex-1 w-full">
+                <div className="mt-auto pt-4 flex flex-col gap-3">
+                    <div className="w-full">
                         <p className="text-[10px] text-slate-500 mb-1 font-medium italic">Sales Price (₹)</p>
                         <input
                             type="number"
@@ -131,20 +131,20 @@ function SortableProductCard({
                         />
                     </div>
 
-                    <div className="flex items-center justify-center sm:justify-end gap-1">
+                    <div className="w-full">
                         {cartItem.qty > 0 ? (
-                            <div className="flex items-center bg-surface-900 rounded-2xl p-1 border border-surface-700 w-full sm:w-auto justify-between sm:justify-start">
+                            <div className="flex items-center bg-surface-900 rounded-2xl p-1 border border-surface-700 w-full justify-between">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onRemoveFromCart(product.id); }}
-                                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-surface-800 text-white hover:bg-surface-700 transition-colors"
+                                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-800 text-white hover:bg-surface-700 transition-colors"
                                 >
                                     <Minus size={14} />
                                 </button>
-                                <span className="px-4 text-center font-bold text-white text-sm">{cartItem.qty}</span>
+                                <span className="px-4 text-center font-bold text-white text-base">{cartItem.qty}</span>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
                                     disabled={cartItem.qty >= product.stock_quantity}
-                                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-primary-600 text-white hover:bg-primary-500 transition-colors disabled:opacity-50"
+                                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary-600 text-white hover:bg-primary-500 transition-colors disabled:opacity-50"
                                 >
                                     <Plus size={14} />
                                 </button>
@@ -153,10 +153,10 @@ function SortableProductCard({
                             <button
                                 onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
                                 disabled={product.stock_quantity <= 0}
-                                className="w-full sm:w-12 h-11 sm:h-12 flex items-center justify-center rounded-2xl bg-surface-900 text-white border border-surface-700 hover:bg-primary-600 hover:border-primary-500 hover:shadow-lg hover:shadow-primary-900/30 transition-all transform hover:-translate-y-1 disabled:opacity-50 gap-2 sm:gap-0"
+                                className="w-full h-12 flex items-center justify-center rounded-2xl bg-surface-900 text-white border border-surface-700 hover:bg-primary-600 hover:border-primary-500 hover:shadow-lg hover:shadow-primary-900/30 transition-all transform hover:-translate-y-1 disabled:opacity-50 gap-2"
                             >
                                 <Plus size={20} />
-                                <span className="sm:hidden font-bold text-sm">Add to Cart</span>
+                                <span className="font-bold text-sm">Add to Cart</span>
                             </button>
                         )}
                     </div>
