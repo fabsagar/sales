@@ -86,11 +86,7 @@ export default function DashboardPage() {
                     </h1>
                     <p className="text-slate-400 text-sm mt-1">Here's what's happening with your sales today.</p>
                 </div>
-                {['admin', 'salesperson'].includes(activeRole) && (
-                    <Link to="/orders/new" className="btn-primary">
-                        <PlusCircle size={16} /> New Order
-                    </Link>
-                )}
+
             </div>
 
             {/* Admin stats */}
@@ -124,9 +120,7 @@ export default function DashboardPage() {
                     <div className="text-center py-12 text-slate-500">
                         <ShoppingCart size={40} className="mx-auto mb-3 opacity-30" />
                         <p>No orders yet.</p>
-                        {['admin', 'salesperson'].includes(activeRole) && (
-                            <Link to="/orders/new" className="btn-primary mt-4 inline-flex">Create first order</Link>
-                        )}
+
                     </div>
                 ) : (
                     <div className="table-wrap">

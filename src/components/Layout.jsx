@@ -22,7 +22,6 @@ const NAV_ITEMS = {
         { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
         { to: '/products/gallery', icon: Package, label: 'Product Gallery' },
         { to: '/orders', icon: ShoppingCart, label: 'My Orders' },
-        { to: '/orders/new', icon: PlusCircle, label: 'New Order' },
         { to: '/retailers', icon: Building2, label: 'Shops' },
         { to: '/notifications', icon: Bell, label: 'Notifications' },
     ],
