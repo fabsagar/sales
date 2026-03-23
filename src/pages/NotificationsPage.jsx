@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Bell, Check, CheckCheck, Loader2 } from 'lucide-react';
 import { notificationsApi } from '../lib/api.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { formatDateTime } from '../lib/format.js';
 import toast from 'react-hot-toast';
 
