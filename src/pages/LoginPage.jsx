@@ -35,14 +35,14 @@ export default function LoginPage() {
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-2xl shadow-2xl shadow-primary-900/50 mb-4">
                         <BarChart3 size={32} className="text-white" />
                     </div>
-                    <h1 className="text-3xl font-bold text-white">SalesPro</h1>
+                    <h1 className="text-3xl font-bold text-white">{import.meta.env.VITE_APP_NAME || 'SalesFirst'}</h1>
                     <p className="text-slate-400 mt-2">Sales Management System</p>
                 </div>
 
                 {/* Card */}
                 <div className="glass-card p-10 flex flex-col items-center">
                     <h2 className="text-xl font-semibold text-white mb-8">Secure Corporate Login</h2>
-                    
+
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-6 gap-4">
                             <Loader2 size={32} className="text-primary-500 animate-spin" />
@@ -60,7 +60,7 @@ export default function LoginPage() {
                             />
                         </div>
                     )}
-                    
+
                     <p className="text-xs text-slate-500 mt-8 text-center px-4">
                         Access is restricted to authorized company email addresses only.
                     </p>

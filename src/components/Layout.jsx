@@ -90,7 +90,7 @@ export default function Layout() {
                             <BarChart3 size={18} className="text-white" />
                         </div>
                         <div>
-                            <h1 className="font-bold text-white text-sm leading-none">SalesPro</h1>
+                            <h1 className="font-bold text-white text-sm leading-none">{import.meta.env.VITE_APP_NAME || 'SalesFirst'}</h1>
                             <p className="text-slate-500 text-xs mt-0.5">Management</p>
                         </div>
                     </div>
