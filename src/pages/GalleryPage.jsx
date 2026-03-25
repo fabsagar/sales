@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Plus, Minus, Package, ArrowRight, Loader2, ArrowUp, ArrowDown, Building2, GripVertical, CheckCircle2 } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Package, ArrowRight, Loader2, ArrowUp, ArrowDown, Building2, GripVertical, CheckCircle2, ArrowUpDown, SortAsc, SortDesc } from 'lucide-react';
 import { productsApi, retailersApi } from '../lib/api.js';
 import { formatCurrency } from '../lib/format.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
@@ -187,6 +187,10 @@ export default function GalleryPage() {
         const saved = localStorage.getItem(`gallery_ranks_${user.id}`);
         return saved ? JSON.parse(saved) : {};
     }); // {productId: rankValue}
+    const [sortBy, setSortBy] = useState(() => {
+        const saved = localStorage.getItem(`gallery_sort_${user.id}`);
+        return saved || 'oldest';
+    });
 
     // Prevent drag from activating when interacting with inputs, buttons, etc.
     function shouldHandleEvent(element) {
@@ -222,17 +226,7 @@ export default function GalleryPage() {
             setRetailers(rData.retailers || []);
             setCategories(['All', ...(cData.categories || [])]);
 
-            let sorted = pData.products || [];
-
-            // Sort based on custom ranks (higher rank first)
-            sorted.sort((a, b) => {
-                const rankA = ranks[a.id] || 0;
-                const rankB = ranks[b.id] || 0;
-                if (rankA !== rankB) return rankB - rankA;
-                return b.id - a.id; // stable fallback
-            });
-
-            setProducts(sorted);
+            setProducts(pData.products || []);
         } catch (err) {
             toast.error(err.message);
         } finally {
@@ -313,9 +307,8 @@ export default function GalleryPage() {
             localStorage.setItem(`gallery_ranks_${user.id}`, JSON.stringify(newRanks));
             return newRanks;
         });
-        // Trigger a re-sort (in a real app this might be more efficient, 
-        // but re-fetching or re-sorting local state works here)
-        setTimeout(fetchProducts, 0);
+        setSortBy('manual');
+        localStorage.setItem(`gallery_sort_${user.id}`, 'manual');
     };
 
     const goToOrder = () => {
@@ -381,6 +374,9 @@ export default function GalleryPage() {
                 setRanks(newRanks);
                 localStorage.setItem(`gallery_ranks_${user.id}`, JSON.stringify(newRanks));
 
+                setSortBy('manual');
+                localStorage.setItem(`gallery_sort_${user.id}`, 'manual');
+
                 return newOrder;
             });
 
@@ -408,9 +404,32 @@ export default function GalleryPage() {
         });
     };
 
-    const filteredProducts = products.filter(p =>
-        selectedCategory === 'All' || p.category === selectedCategory
-    );
+    const sortedProducts = useMemo(() => {
+        let items = [...products];
+        if (sortBy === 'manual') {
+            items.sort((a, b) => {
+                const rankA = ranks[a.id] || 0;
+                const rankB = ranks[b.id] || 0;
+                if (rankA !== rankB) return rankB - rankA;
+                return a.id - b.id; // Default oldest first
+            });
+        } else if (sortBy === 'newest') {
+            items.sort((a, b) => b.id - a.id);
+        } else if (sortBy === 'oldest') {
+            items.sort((a, b) => a.id - b.id);
+        } else if (sortBy === 'name_asc') {
+            items.sort((a, b) => a.name.localeCompare(b.name));
+        } else if (sortBy === 'name_desc') {
+            items.sort((a, b) => b.name.localeCompare(a.name));
+        }
+        return items;
+    }, [products, sortBy, ranks]);
+
+    const filteredProducts = useMemo(() => {
+        return sortedProducts.filter(p =>
+            selectedCategory === 'All' || p.category === selectedCategory
+        );
+    }, [sortedProducts, selectedCategory]);
 
     const getGridClass = () => {
         if (gridCols === 1) return 'grid-cols-1 max-w-xl mx-auto';
@@ -454,6 +473,24 @@ export default function GalleryPage() {
                                 {retailers.map(r => (
                                     <option key={r.id} value={r.id}>{r.name}</option>
                                 ))}
+                            </select>
+                        </div>
+
+                        <div className="relative max-w-xs hidden xl:flex items-center gap-2">
+                            <ArrowUpDown size={16} className="text-slate-500" />
+                            <select
+                                className="bg-surface-800 border border-surface-700/50 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:ring-1 focus:ring-primary-500 min-w-[130px]"
+                                value={sortBy}
+                                onChange={(e) => {
+                                    setSortBy(e.target.value);
+                                    localStorage.setItem(`gallery_sort_${user.id}`, e.target.value);
+                                }}
+                            >
+                                <option value="oldest">Oldest First</option>
+                                <option value="newest">Newest First</option>
+                                <option value="name_asc">Name (A-Z)</option>
+                                <option value="name_desc">Name (Z-A)</option>
+                                <option value="manual">Manual Order</option>
                             </select>
                         </div>
                         <div className="relative max-w-xs hidden sm:block">
@@ -520,6 +557,23 @@ export default function GalleryPage() {
                                     value={search}
                                     onChange={e => setSearch(e.target.value)}
                                 />
+                            </div>
+
+                            <div className="relative">
+                                <select
+                                    className="bg-surface-800 border border-surface-700/50 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:ring-1 focus:ring-primary-500"
+                                    value={sortBy}
+                                    onChange={(e) => {
+                                        setSortBy(e.target.value);
+                                        localStorage.setItem(`gallery_sort_${user.id}`, e.target.value);
+                                    }}
+                                >
+                                    <option value="oldest">Oldest First</option>
+                                    <option value="newest">Newest First</option>
+                                    <option value="name_asc">Name (A-Z)</option>
+                                    <option value="name_desc">Name (Z-A)</option>
+                                    <option value="manual">Manual Order</option>
+                                </select>
                             </div>
                             <div className="flex items-center bg-surface-800 rounded-xl p-1 border border-surface-700/50">
                                 {[1, 2].map(cols => (
