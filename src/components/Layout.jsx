@@ -159,7 +159,7 @@ export default function Layout() {
                     </button>
                     <div className="flex items-center gap-3 ml-auto">
                         {cartTotalItems > 0 && (
-                            <NavLink to="/products/gallery" className="relative btn-icon lg:hidden text-primary-500 animate-pulse">
+                            <NavLink to="/orders/new" className="relative btn-icon lg:hidden text-primary-500 animate-pulse">
                                 <ShoppingCart size={18} />
                                 <span className="notif-badge">{cartTotalItems}</span>
                             </NavLink>

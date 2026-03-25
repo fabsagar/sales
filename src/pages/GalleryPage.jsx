@@ -288,23 +288,7 @@ export default function GalleryPage() {
             return;
         }
 
-        if (!isAdmin) {
-            const invalidItems = Object.entries(cart).filter(([id, data]) => {
-                const product = products.find(p => p.id === parseInt(id));
-                const price = parseFloat(data.price) || (product ? product.default_selling_price : 0);
-                return product && price < product.purchase_price;
-            });
-
-            if (invalidItems.length > 0) {
-                toast.error('Please correct prices.');
-                return;
-            }
-        }
-        // In a real app, we might pass the cart state via context or navigation state
-        // For now, we'll just navigate to the new order page.
-        // If the NewOrderPage doesn't support pre-filling, the user will have to add them again.
-        // A better improvement would be a shared Cart Context, but for this task,
-        // we'll focus on the gallery UI.
+        // Removed local price validation to allow navigating to checkout even if prices need correction
         navigate('/orders/new', { state: { selectedProducts: cart, selectedShop } });
     };
 
