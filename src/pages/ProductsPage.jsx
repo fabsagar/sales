@@ -255,12 +255,200 @@ function ProductModal({ product, onClose, onSaved, existingProducts = [] }) {
     );
 }
 
+function BulkEntryModal({ onClose, onSaved }) {
+    const [rows, setRows] = useState([
+        { id: 1, name: '', category: '', purchase_price: '', default_selling_price: '', stock_quantity: '' },
+        { id: 2, name: '', category: '', purchase_price: '', default_selling_price: '', stock_quantity: '' },
+        { id: 3, name: '', category: '', purchase_price: '', default_selling_price: '', stock_quantity: '' },
+    ]);
+    const [saving, setSaving] = useState(false);
+
+    const addRow = () => {
+        setRows([...rows, { 
+            id: Date.now(), 
+            name: '', 
+            category: rows.length > 0 ? rows[rows.length-1].category : '', 
+            purchase_price: '', 
+            default_selling_price: '', 
+            stock_quantity: '' 
+        }]);
+    };
+
+    const removeRow = (id) => {
+        if (rows.length > 1) {
+            setRows(rows.filter(r => r.id !== id));
+        }
+    };
+
+    const handleChange = (id, field, value) => {
+        setRows(rows.map(r => r.id === id ? { ...r, [field]: value } : r));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const validRows = rows.filter(r => r.name.trim() !== '');
+        if (validRows.length === 0) {
+            toast.error('Please add at least one product name');
+            return;
+        }
+
+        // Validate all valid rows
+        for (const r of validRows) {
+            if (!r.purchase_price || !r.stock_quantity) {
+                toast.error(`Please complete row for ${r.name}`);
+                return;
+            }
+        }
+
+        setSaving(true);
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const r of validRows) {
+            try {
+                const data = {
+                    name: r.name,
+                    category: r.category,
+                    purchase_price: +r.purchase_price,
+                    default_selling_price: r.default_selling_price !== '' ? +r.default_selling_price : null,
+                    stock_quantity: +r.stock_quantity,
+                };
+                await productsApi.create(data);
+                successCount++;
+            } catch (err) {
+                failCount++;
+                console.error(`Failed to add ${r.name}:`, err);
+            }
+        }
+
+        if (successCount > 0) toast.success(`Successfully added ${successCount} products`);
+        if (failCount > 0) toast.error(`Failed to add ${failCount} products`);
+
+        if (successCount > 0) {
+            onSaved();
+            onClose();
+        }
+        setSaving(false);
+    };
+
+    return (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && !saving && onClose()}>
+            <div className="modal-box max-w-4xl max-h-[90vh] flex flex-col p-8">
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            Bulk Product Entry
+                        </h2>
+                        <p className="text-slate-500 text-xs mt-1">Enter multiple products manually. Only rows with names will be saved.</p>
+                    </div>
+                    <button onClick={onClose} disabled={saving} className="btn-icon"><X size={18} /></button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto mb-6 pr-2 scrollbar-thin">
+                    <table className="w-full text-left border-collapse min-w-[700px]">
+                        <thead className="sticky top-0 bg-surface-900 z-10">
+                            <tr className="text-slate-500 text-[10px] uppercase tracking-wider border-b border-surface-700">
+                                <th className="pb-4 px-2 font-bold">Product Name *</th>
+                                <th className="pb-4 px-2 font-bold">Category</th>
+                                <th className="pb-4 px-2 font-bold w-24">Stock *</th>
+                                <th className="pb-4 px-2 font-bold w-32">Buy Price (₹) *</th>
+                                <th className="pb-4 px-2 font-bold w-32">Sell Price (₹)</th>
+                                <th className="pb-4 px-2 w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-surface-800">
+                            {rows.map((row) => (
+                                <tr key={row.id} className="group hover:bg-surface-800/20 transition-colors">
+                                    <td className="py-3 px-1">
+                                        <input
+                                            className="bg-surface-800/50 border border-surface-700/50 rounded-lg px-3 py-2 text-white text-sm focus:ring-1 focus:ring-primary-500 w-full placeholder:text-slate-700 outline-none"
+                                            placeholder="e.g. Item A"
+                                            value={row.name}
+                                            onChange={(e) => handleChange(row.id, 'name', e.target.value)}
+                                        />
+                                    </td>
+                                    <td className="py-3 px-1">
+                                        <input
+                                            className="bg-surface-800/50 border border-surface-700/50 rounded-lg px-3 py-2 text-white text-sm focus:ring-1 focus:ring-primary-500 w-full placeholder:text-slate-700 outline-none"
+                                            placeholder="Gadgets"
+                                            value={row.category}
+                                            onChange={(e) => handleChange(row.id, 'category', e.target.value)}
+                                        />
+                                    </td>
+                                    <td className="py-3 px-1">
+                                        <input
+                                            type="number"
+                                            className="bg-surface-800/50 border border-surface-700/50 rounded-lg px-3 py-2 text-white text-sm focus:ring-1 focus:ring-primary-500 w-full placeholder:text-slate-700 outline-none"
+                                            placeholder="0"
+                                            value={row.stock_quantity}
+                                            onChange={(e) => handleChange(row.id, 'stock_quantity', e.target.value)}
+                                        />
+                                    </td>
+                                    <td className="py-3 px-1">
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            className="bg-surface-800/50 border border-surface-700/50 rounded-lg px-3 py-2 text-white text-sm focus:ring-1 focus:ring-primary-500 w-full placeholder:text-slate-700 outline-none"
+                                            placeholder="0.00"
+                                            value={row.purchase_price}
+                                            onChange={(e) => handleChange(row.id, 'purchase_price', e.target.value)}
+                                        />
+                                    </td>
+                                    <td className="py-3 px-1">
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            className="bg-surface-800/50 border border-surface-700/50 rounded-lg px-3 py-2 text-white text-sm focus:ring-1 focus:ring-primary-500 w-full placeholder:text-slate-700 outline-none"
+                                            placeholder="0.00"
+                                            value={row.default_selling_price}
+                                            onChange={(e) => handleChange(row.id, 'default_selling_price', e.target.value)}
+                                        />
+                                    </td>
+                                    <td className="py-3 px-1 text-right">
+                                        <button 
+                                            onClick={() => removeRow(row.id)}
+                                            className="text-slate-600 hover:text-red-400 p-2 transition-colors disabled:opacity-0"
+                                            title="Remove Row"
+                                            disabled={rows.length === 1}
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    
+                    <button 
+                        onClick={addRow}
+                        className="mt-6 flex items-center gap-2 text-primary-500 hover:text-primary-400 text-sm font-bold bg-primary-500/5 px-4 py-3 rounded-xl border border-dashed border-primary-500/20 hover:border-primary-500/40 transition-all w-full justify-center group"
+                    >
+                        <Plus size={18} className="group-hover:scale-125 transition-transform" /> 
+                        Click to add another item row
+                    </button>
+                </div>
+
+                <div className="flex gap-4 pt-6 border-t border-surface-700/50">
+                    <button onClick={onClose} disabled={saving} className="btn-secondary h-12 flex-1">Discard Changes</button>
+                    <button 
+                        onClick={handleSubmit} 
+                        disabled={saving} 
+                        className="btn-primary h-12 flex-2 bg-gradient-to-r from-primary-600 to-primary-500"
+                    >
+                        {saving ? <><Loader2 size={18} className="animate-spin" /> Batch creating products...</> : `Confirm & Create All Products`}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function ProductsPage() {
     const { user, activeRole } = useAuth();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [modal, setModal] = useState(null); // null | 'create' | product object
+    const [modal, setModal] = useState(null); // null | 'create' | 'bulk' | product object
     const [deleting, setDeleting] = useState(null);
 
     const fetchProducts = useCallback(async () => {
@@ -295,9 +483,14 @@ export default function ProductsPage() {
                     <p className="text-slate-400 text-sm mt-1">{products.length} products in inventory</p>
                 </div>
                 {isAdmin && (
-                    <button onClick={() => setModal('create')} className="btn-primary">
-                        <Plus size={16} /> Add Product
-                    </button>
+                    <div className="flex gap-3">
+                        <button onClick={() => setModal('bulk')} className="btn-secondary hidden sm:flex items-center gap-2">
+                            <Plus size={16} /> Bulk Add
+                        </button>
+                        <button onClick={() => setModal('create')} className="btn-primary">
+                            <Plus size={16} /> Add Product
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -386,10 +579,17 @@ export default function ProductsPage() {
                 </div>
             )}
 
-            {modal && (
+            {modal && (modal !== 'bulk') && (
                 <ProductModal
                     product={modal === 'create' ? null : modal}
                     existingProducts={products}
+                    onClose={() => setModal(null)}
+                    onSaved={fetchProducts}
+                />
+            )}
+
+            {modal === 'bulk' && (
+                <BulkEntryModal
                     onClose={() => setModal(null)}
                     onSaved={fetchProducts}
                 />
