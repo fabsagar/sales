@@ -4,6 +4,7 @@ import { Search, ShoppingCart, Plus, Minus, Package, ArrowRight, Loader2, ArrowU
 import { productsApi, retailersApi } from '../lib/api.js';
 import { formatCurrency } from '../lib/format.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { useCart } from '../contexts/CartContext.jsx';
 import toast from 'react-hot-toast';
 import {
     DndContext,
@@ -182,7 +183,7 @@ export default function GalleryPage() {
     const [retailers, setRetailers] = useState([]);
     const [selectedShop, setSelectedShop] = useState('');
     const [selectedProductIds, setSelectedProductIds] = useState([]);
-    const [cart, setCart] = useState({}); // {productId: {qty, price}}
+    const { cart, cartTotalItems, addToCart: ctxAddToCart, removeFromCart, updateCartPrice } = useCart();
     const [ranks, setRanks] = useState(() => {
         const saved = localStorage.getItem(`gallery_ranks_${user.id}`);
         return saved ? JSON.parse(saved) : {};
@@ -244,60 +245,30 @@ export default function GalleryPage() {
             toast.error('Out of stock');
             return;
         }
-        setCart(prev => {
-            const current = prev[product.id] || { qty: 0, price: '' };
-            if (current.qty >= product.stock_quantity) {
-                toast.error('Cannot add more than available stock');
-                return prev;
-            }
-            return {
-                ...prev,
-                [product.id]: {
-                    qty: current.qty + 1,
-                    price: current.price || ''
-                }
-            };
-        });
+
+        const currentItem = cart[product.id] || { qty: 0, price: '' };
+        if (currentItem.qty >= product.stock_quantity) {
+            toast.error('Cannot add more than available stock');
+            return;
+        }
+
         if (!isAdmin) {
-            const currentPrice = cart[product.id]?.price || product.default_selling_price || 0;
+            const currentPrice = currentItem.price || product.default_selling_price || 0;
             if (parseFloat(currentPrice) < product.purchase_price) {
-                // We'll allow adding it to cart state but show warning? 
-                // Actually the user said "do not let it add to cart/order".
-                // If I don't add it, they can't even start. 
-                // Let's block the increment if the price is already set too low.
-                if (cart[product.id]?.price && parseFloat(cart[product.id].price) < product.purchase_price) {
+                if (currentItem.price && parseFloat(currentItem.price) < product.purchase_price) {
                     toast.error('Please correct prices.');
                     return;
                 }
             }
         }
+
+        ctxAddToCart(product);
         toast.success(`Added ${product.name} to order`, { duration: 1500 });
     };
 
-    const updateCartPrice = (productId, price) => {
-        setCart(prev => ({
-            ...prev,
-            [productId]: {
-                ...(prev[productId] || { qty: 0 }),
-                price
-            }
-        }));
-    };
+    // removeFromCart and updateCartPrice are now from context
 
-    const removeFromCart = (productId) => {
-        setCart(prev => {
-            const newCart = { ...prev };
-            if (!newCart[productId]) return prev;
-            if (newCart[productId].qty > 1) {
-                newCart[productId] = { ...newCart[productId], qty: newCart[productId].qty - 1 };
-            } else {
-                delete newCart[productId];
-            }
-            return newCart;
-        });
-    };
-
-    const cartTotalItems = Object.values(cart).reduce((sum, item) => sum + item.qty, 0);
+    // cartTotalItems is now from context
 
     const updateRank = (productId, direction) => {
         setRanks(prev => {
@@ -440,8 +411,8 @@ export default function GalleryPage() {
     return (
         <div className="pb-20">
             <div className="animate-fade-in">
-                <div className="page-header sticky top-0 bg-surface-900/80 backdrop-blur-md z-30 py-4 mb-6">
-                    <div>
+                <div className="page-header sm:sticky sm:top-0 bg-surface-900/80 backdrop-blur-md z-30 py-4 mb-6 transition-all">
+                    <div className="hidden sm:block">
                         <h1 className="page-title">Product Gallery</h1>
                         <p className="text-slate-400 text-sm mt-1">Quickly add products to your next order</p>
                     </div>
@@ -504,10 +475,10 @@ export default function GalleryPage() {
                         </div>
                         <button
                             onClick={goToOrder}
-                            className="btn-primary relative"
+                            className="hidden sm:flex btn-primary relative"
                         >
                             <ShoppingCart size={18} />
-                            <span className="hidden sm:inline">Go to Cart</span>
+                            <span>Go to Cart</span>
                             {cartTotalItems > 0 && (
                                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-surface-900 animate-bounce">
                                     {cartTotalItems}
@@ -634,26 +605,7 @@ export default function GalleryPage() {
                 )}
             </div>
 
-            {/* Mobile Bottom Bar for Cart */}
-            {cartTotalItems > 0 && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-sm animate-slide-up sm:hidden">
-                    <button
-                        onClick={goToOrder}
-                        className="w-full bg-primary-600 hover:bg-primary-500 text-white py-4 px-6 rounded-3xl font-bold flex items-center justify-between shadow-2xl shadow-primary-900/50 border border-primary-500/50"
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className="bg-white/20 p-2 rounded-xl">
-                                <ShoppingCart size={20} />
-                            </div>
-                            <span className="text-lg">Checkout Order</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="bg-black/20 px-3 py-1 rounded-full text-xs">{cartTotalItems} items</span>
-                            <ArrowRight size={20} />
-                        </div>
-                    </button>
-                </div>
-            )}
+            {/* Mobile Bottom Bar for Cart removed as it's now in the header */}
         </div>
     );
 }

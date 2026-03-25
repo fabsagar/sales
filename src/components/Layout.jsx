@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { notificationsApi } from '../lib/api.js';
+import { useCart } from '../contexts/CartContext.jsx';
 import clsx from '../lib/clsx.js';
 
 const NAV_ITEMS = {
@@ -37,6 +38,7 @@ export default function Layout() {
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const { cartTotalItems } = useCart();
     const pollRef = useRef(null);
 
     const navItems = NAV_ITEMS[activeRole] || [];
@@ -156,6 +158,12 @@ export default function Layout() {
                         <Menu size={20} />
                     </button>
                     <div className="flex items-center gap-3 ml-auto">
+                        {cartTotalItems > 0 && (
+                            <NavLink to="/products/gallery" className="relative btn-icon lg:hidden text-primary-500 animate-pulse">
+                                <ShoppingCart size={18} />
+                                <span className="notif-badge">{cartTotalItems}</span>
+                            </NavLink>
+                        )}
                         <NavLink to="/notifications" className="relative btn-icon">
                             <Bell size={18} />
                             {unreadCount > 0 && (

@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
+import { CartProvider } from './contexts/CartContext.jsx';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Layout from './components/Layout.jsx';
 import LoginPage from './pages/LoginPage.jsx';
@@ -73,7 +74,9 @@ export default function App() {
     return (
         <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
             <AuthProvider>
-                <AppRoutes />
+                <CartProvider>
+                    <AppRoutes />
+                </CartProvider>
             </AuthProvider>
         </GoogleOAuthProvider>
     );

@@ -4,6 +4,7 @@ import { Plus, Minus, Trash2, ShoppingCart, Search, Loader2, ChevronDown, Buildi
 import { productsApi, retailersApi, ordersApi } from '../lib/api.js';
 import { formatCurrency } from '../lib/format.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { useCart } from '../contexts/CartContext.jsx';
 import toast from 'react-hot-toast';
 
 export default function NewOrderPage() {
@@ -18,6 +19,7 @@ export default function NewOrderPage() {
     const [notes, setNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [loading, setLoading] = useState(true);
+    const { cart, clearCart } = useCart();
 
     useEffect(() => {
         Promise.all([
@@ -29,8 +31,8 @@ export default function NewOrderPage() {
             setShops(fetchedShops);
             setProducts(fetchedProducts);
 
-            // Handle pre-filled products from Gallery
-            const selected = location.state?.selectedProducts;
+            // Handle pre-filled products from Gallery (prefer context over location state)
+            const selected = Object.keys(cart).length > 0 ? cart : location.state?.selectedProducts;
             const preShop = location.state?.selectedShop;
 
             if (preShop) setSelectedShop(preShop.toString());
@@ -47,7 +49,7 @@ export default function NewOrderPage() {
 
                 if (items.length > 0) {
                     setOrderItems(items);
-                    toast.success(`Imported ${items.length} items from gallery`);
+                    toast.success(`Imported ${items.length} items to order`);
                 }
             }
         }).catch(err => toast.error(err.message))
@@ -113,6 +115,7 @@ export default function NewOrderPage() {
             };
             const data = await ordersApi.create(payload);
             toast.success('Order submitted successfully!');
+            clearCart();
             navigate(`/orders/${data.orderId}`);
         } catch (err) {
             toast.error(err.message);
