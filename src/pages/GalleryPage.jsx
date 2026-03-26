@@ -180,6 +180,8 @@ export default function GalleryPage() {
     });
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const [retailers, setRetailers] = useState([]);
     const [selectedShop, setSelectedShop] = useState('');
     const [selectedProductIds, setSelectedProductIds] = useState([]);
@@ -192,6 +194,10 @@ export default function GalleryPage() {
         const saved = localStorage.getItem(`gallery_sort_${user.id}`);
         return saved || 'oldest';
     });
+
+    useEffect(() => {
+        setPage(1);
+    }, [search, selectedCategory, sortBy]);
 
     // Prevent drag from activating when interacting with inputs, buttons, etc.
     function shouldHandleEvent(element) {
@@ -218,8 +224,9 @@ export default function GalleryPage() {
     const fetchProducts = useCallback(async () => {
         setLoading(true);
         try {
+            const backendSort = sortBy === 'manual' ? '' : sortBy;
             const [pData, rData, cData] = await Promise.all([
-                productsApi.list({ search, limit: 100 }),
+                productsApi.list({ search, limit: 200, page, sort: backendSort }),
                 retailersApi.list(),
                 productsApi.categories()
             ]);
@@ -228,12 +235,13 @@ export default function GalleryPage() {
             setCategories(['All', ...(cData.categories || [])]);
 
             setProducts(pData.products || []);
+            setTotalPages(pData.pagination?.pages || 1);
         } catch (err) {
             toast.error(err.message);
         } finally {
             setLoading(false);
         }
-    }, [search]);
+    }, [search, page, sortBy]);
 
     useEffect(() => {
         fetchProducts();
@@ -368,14 +376,6 @@ export default function GalleryPage() {
                 if (rankA !== rankB) return rankB - rankA;
                 return a.id - b.id; // Default oldest first
             });
-        } else if (sortBy === 'newest') {
-            items.sort((a, b) => b.id - a.id);
-        } else if (sortBy === 'oldest') {
-            items.sort((a, b) => a.id - b.id);
-        } else if (sortBy === 'name_asc') {
-            items.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (sortBy === 'name_desc') {
-            items.sort((a, b) => b.name.localeCompare(a.name));
         }
         return items;
     }, [products, sortBy, ranks]);
@@ -586,6 +586,28 @@ export default function GalleryPage() {
                             </div>
                         </SortableContext>
                     </DndContext>
+                )}
+                
+                {totalPages > 1 && !loading && filteredProducts.length > 0 && (
+                    <div className="flex items-center justify-center gap-4 mt-8 pb-8">
+                        <button 
+                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                            disabled={page === 1}
+                            className="btn-secondary px-4 py-2"
+                        >
+                            Previous
+                        </button>
+                        <span className="text-sm font-medium text-slate-400">
+                            Page {page} of {totalPages}
+                        </span>
+                        <button 
+                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                            disabled={page === totalPages}
+                            className="btn-secondary px-4 py-2"
+                        >
+                            Next
+                        </button>
+                    </div>
                 )}
             </div>
 

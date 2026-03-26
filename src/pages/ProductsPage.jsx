@@ -450,15 +450,18 @@ export default function ProductsPage() {
     const [search, setSearch] = useState('');
     const [modal, setModal] = useState(null); // null | 'create' | 'bulk' | product object
     const [deleting, setDeleting] = useState(null);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
 
     const fetchProducts = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await productsApi.list({ search, limit: 50 });
+            const data = await productsApi.list({ search, limit: 200, page });
             setProducts(data.products || []);
+            setTotalPages(data.pagination?.pages || 1);
         } catch (err) { toast.error(err.message); }
         finally { setLoading(false); }
-    }, [search]);
+    }, [search, page]);
 
     useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -501,7 +504,7 @@ export default function ProductsPage() {
                     className="input pl-9"
                     placeholder="Search products..."
                     value={search}
-                    onChange={e => setSearch(e.target.value)}
+                    onChange={e => { setSearch(e.target.value); setPage(1); }}
                 />
             </div>
 
@@ -576,6 +579,28 @@ export default function ProductsPage() {
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {totalPages > 1 && !loading && products.length > 0 && (
+                <div className="flex items-center justify-center gap-4 mt-8 pb-8">
+                    <button 
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="btn-secondary px-4 py-2"
+                    >
+                        Previous
+                    </button>
+                    <span className="text-sm font-medium text-slate-400">
+                        Page {page} of {totalPages}
+                    </span>
+                    <button 
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                        className="btn-secondary px-4 py-2"
+                    >
+                        Next
+                    </button>
                 </div>
             )}
 
