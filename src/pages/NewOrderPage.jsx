@@ -24,7 +24,7 @@ export default function NewOrderPage() {
     useEffect(() => {
         Promise.all([
             retailersApi.list(),
-            productsApi.list({ limit: 100 }),
+            productsApi.list({ limit: 5000 }),
         ]).then(([r, p]) => {
             const fetchedShops = r.retailers || [];
             const fetchedProducts = p.products || [];
