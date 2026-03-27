@@ -438,23 +438,7 @@ export default function GalleryPage() {
                             </select>
                         </div>
 
-                        <div className="relative max-w-xs hidden xl:flex items-center gap-2">
-                            <ArrowUpDown size={16} className="text-slate-500" />
-                            <select
-                                className="bg-surface-800 border border-surface-700/50 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:ring-1 focus:ring-primary-500 min-w-[130px]"
-                                value={sortBy}
-                                onChange={(e) => {
-                                    setSortBy(e.target.value);
-                                    localStorage.setItem(`gallery_sort_${user.id}`, e.target.value);
-                                }}
-                            >
-                                <option value="oldest">Oldest First</option>
-                                <option value="newest">Newest First</option>
-                                <option value="name_asc">Name (A-Z)</option>
-                                <option value="name_desc">Name (Z-A)</option>
-                                <option value="manual">Manual Order</option>
-                            </select>
-                        </div>
+
                         <div className="relative max-w-xs hidden sm:block">
                             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                             <input
@@ -479,11 +463,11 @@ export default function GalleryPage() {
                     </div>
                 </div>
 
-                {/* Category Filter & Mobile Controls */}
+                {/* Category Filter & Sort Controls */}
                 <div className="mb-8 space-y-4">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                         <select
-                            className="bg-surface-800 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-white font-medium outline-none focus:ring-1 focus:ring-primary-500 w-full sm:max-w-xs transition-all"
+                            className="bg-surface-800 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-white font-medium outline-none focus:ring-1 focus:ring-primary-500 flex-1 sm:max-w-xs transition-all"
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
                         >
@@ -492,6 +476,20 @@ export default function GalleryPage() {
                                     {cat === 'All' ? 'All Categories' : cat}
                                 </option>
                             ))}
+                        </select>
+                        <select
+                            className="bg-surface-800 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-white font-medium outline-none focus:ring-1 focus:ring-primary-500 flex-1 sm:max-w-xs transition-all"
+                            value={sortBy}
+                            onChange={(e) => {
+                                setSortBy(e.target.value);
+                                localStorage.setItem(`gallery_sort_${user.id}`, e.target.value);
+                            }}
+                        >
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="name_asc">Name (A-Z)</option>
+                            <option value="name_desc">Name (Z-A)</option>
+                            <option value="manual">Manual Order</option>
                         </select>
                     </div>
 
@@ -520,22 +518,7 @@ export default function GalleryPage() {
                                 />
                             </div>
 
-                            <div className="relative">
-                                <select
-                                    className="bg-surface-800 border border-surface-700/50 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:ring-1 focus:ring-primary-500"
-                                    value={sortBy}
-                                    onChange={(e) => {
-                                        setSortBy(e.target.value);
-                                        localStorage.setItem(`gallery_sort_${user.id}`, e.target.value);
-                                    }}
-                                >
-                                    <option value="oldest">Oldest First</option>
-                                    <option value="newest">Newest First</option>
-                                    <option value="name_asc">Name (A-Z)</option>
-                                    <option value="name_desc">Name (Z-A)</option>
-                                    <option value="manual">Manual Order</option>
-                                </select>
-                            </div>
+
                             <div className="flex items-center bg-surface-800 rounded-xl p-1 border border-surface-700/50">
                                 {[1, 2].map(cols => (
                                     <button
