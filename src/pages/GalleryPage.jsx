@@ -193,9 +193,7 @@ export default function GalleryPage() {
         return saved || 'oldest';
     });
 
-    useEffect(() => {
-        setPage(1);
-    }, [search, selectedCategory, sortBy]);
+
 
     // Prevent drag from activating when interacting with inputs, buttons, etc.
     function shouldHandleEvent(element) {
