@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Plus, Search, Edit2, Trash2, Loader2, Package, X, Upload } from 'lucide-react';
 import { productsApi, uploadImage } from '../lib/api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
