@@ -448,6 +448,9 @@ export default function ProductsPage() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [sortBy, setSortBy] = useState(() => {
+        return localStorage.getItem(`products_sort_${user.id}`) || 'newest';
+    });
     const [modal, setModal] = useState(null); // null | 'create' | 'bulk' | product object
     const [deleting, setDeleting] = useState(null);
 
@@ -461,10 +464,25 @@ export default function ProductsPage() {
     }, []);
 
     const filteredProducts = useMemo(() => {
-        if (!search.trim()) return products;
-        const s = search.toLowerCase();
-        return products.filter(p => p.name.toLowerCase().includes(s) || (p.description && p.description.toLowerCase().includes(s)));
-    }, [products, search]);
+        let items = [...products];
+
+        if (search.trim()) {
+            const s = search.toLowerCase();
+            items = items.filter(p => p.name.toLowerCase().includes(s) || (p.description && p.description.toLowerCase().includes(s)));
+        }
+
+        if (sortBy === 'newest') {
+            items.sort((a, b) => b.id - a.id);
+        } else if (sortBy === 'oldest') {
+            items.sort((a, b) => a.id - b.id);
+        } else if (sortBy === 'name_asc') {
+            items.sort((a, b) => a.name.localeCompare(b.name));
+        } else if (sortBy === 'name_desc') {
+            items.sort((a, b) => b.name.localeCompare(a.name));
+        }
+
+        return items;
+    }, [products, search, sortBy]);
 
     useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -500,15 +518,32 @@ export default function ProductsPage() {
                 )}
             </div>
 
-            {/* Search */}
-            <div className="relative mb-6 max-w-md">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input
-                    className="input pl-9"
-                    placeholder="Search products..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                />
+            {/* Controls */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-6 relative z-10 w-full max-w-2xl">
+                <div className="relative flex-1">
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <input
+                        className="input pl-9"
+                        placeholder="Search products..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                    />
+                </div>
+                <div className="relative">
+                    <select
+                        className="bg-surface-800 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-white font-medium outline-none focus:ring-1 focus:ring-primary-500 w-full sm:min-w-[150px] transition-all"
+                        value={sortBy}
+                        onChange={(e) => {
+                            setSortBy(e.target.value);
+                            localStorage.setItem(`products_sort_${user.id}`, e.target.value);
+                        }}
+                    >
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="name_asc">Name (A-Z)</option>
+                        <option value="name_desc">Name (Z-A)</option>
+                    </select>
+                </div>
             </div>
 
             {loading ? (
