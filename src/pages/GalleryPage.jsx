@@ -180,8 +180,6 @@ export default function GalleryPage() {
     });
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
     const [retailers, setRetailers] = useState([]);
     const [selectedShop, setSelectedShop] = useState('');
     const [selectedProductIds, setSelectedProductIds] = useState([]);
@@ -224,9 +222,8 @@ export default function GalleryPage() {
     const fetchProducts = useCallback(async () => {
         setLoading(true);
         try {
-            const backendSort = sortBy === 'manual' ? '' : sortBy;
             const [pData, rData, cData] = await Promise.all([
-                productsApi.list({ search, limit: 200, page, sort: backendSort }),
+                productsApi.list({ limit: 5000 }),
                 retailersApi.list(),
                 productsApi.categories()
             ]);
@@ -235,13 +232,12 @@ export default function GalleryPage() {
             setCategories(['All', ...(cData.categories || [])]);
 
             setProducts(pData.products || []);
-            setTotalPages(pData.pagination?.pages || 1);
         } catch (err) {
             toast.error(err.message);
         } finally {
             setLoading(false);
         }
-    }, [search, page, sortBy]);
+    }, []);
 
     useEffect(() => {
         fetchProducts();
@@ -369,6 +365,15 @@ export default function GalleryPage() {
 
     const sortedProducts = useMemo(() => {
         let items = [...products];
+
+        if (selectedCategory !== 'All') {
+            items = items.filter(p => p.category === selectedCategory);
+        }
+        if (search.trim()) {
+            const s = search.toLowerCase();
+            items = items.filter(p => p.name.toLowerCase().includes(s) || (p.description && p.description.toLowerCase().includes(s)));
+        }
+
         if (sortBy === 'manual') {
             items.sort((a, b) => {
                 const rankA = ranks[a.id] || 0;
@@ -376,15 +381,19 @@ export default function GalleryPage() {
                 if (rankA !== rankB) return rankB - rankA;
                 return a.id - b.id; // Default oldest first
             });
+        } else if (sortBy === 'newest') {
+            items.sort((a, b) => b.id - a.id);
+        } else if (sortBy === 'oldest') {
+            items.sort((a, b) => a.id - b.id);
+        } else if (sortBy === 'name_asc') {
+            items.sort((a, b) => a.name.localeCompare(b.name));
+        } else if (sortBy === 'name_desc') {
+            items.sort((a, b) => b.name.localeCompare(a.name));
         }
         return items;
-    }, [products, sortBy, ranks]);
+    }, [products, sortBy, ranks, selectedCategory, search]);
 
-    const filteredProducts = useMemo(() => {
-        return sortedProducts.filter(p =>
-            selectedCategory === 'All' || p.category === selectedCategory
-        );
-    }, [sortedProducts, selectedCategory]);
+    const filteredProducts = sortedProducts;
 
     const getGridClass = () => {
         if (gridCols === 1) return 'grid-cols-1 max-w-xl mx-auto';
@@ -474,19 +483,18 @@ export default function GalleryPage() {
 
                 {/* Category Filter & Mobile Controls */}
                 <div className="mb-8 space-y-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                        {categories.map(cat => (
-                            <button
-                                key={cat}
-                                onClick={() => setSelectedCategory(cat)}
-                                className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all border ${selectedCategory === cat
-                                    ? 'bg-primary-600 border-primary-500 text-white shadow-lg shadow-primary-900/20'
-                                    : 'bg-surface-800 border-surface-700/50 text-slate-400 hover:border-surface-600 hover:text-white'
-                                    }`}
-                            >
-                                {cat}
-                            </button>
-                        ))}
+                    <div className="flex items-center gap-3">
+                        <select
+                            className="bg-surface-800 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-white font-medium outline-none focus:ring-1 focus:ring-primary-500 w-full sm:max-w-xs transition-all"
+                            value={selectedCategory}
+                            onChange={(e) => setSelectedCategory(e.target.value)}
+                        >
+                            {categories.map(cat => (
+                                <option key={cat} value={cat}>
+                                    {cat === 'All' ? 'All Categories' : cat}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="sm:hidden flex flex-col gap-3">
@@ -586,28 +594,6 @@ export default function GalleryPage() {
                             </div>
                         </SortableContext>
                     </DndContext>
-                )}
-                
-                {totalPages > 1 && !loading && filteredProducts.length > 0 && (
-                    <div className="flex items-center justify-center gap-4 mt-8 pb-8">
-                        <button 
-                            onClick={() => setPage(p => Math.max(1, p - 1))}
-                            disabled={page === 1}
-                            className="btn-secondary px-4 py-2"
-                        >
-                            Previous
-                        </button>
-                        <span className="text-sm font-medium text-slate-400">
-                            Page {page} of {totalPages}
-                        </span>
-                        <button 
-                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                            disabled={page === totalPages}
-                            className="btn-secondary px-4 py-2"
-                        >
-                            Next
-                        </button>
-                    </div>
                 )}
             </div>
 

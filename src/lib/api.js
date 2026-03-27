@@ -78,14 +78,32 @@ export const authApi = {
     me: () => api.get('/me'),
 };
 
-// Products
+// Products Cache
+let productCachePromise = null;
+
 export const productsApi = {
-    list: (params) => api.get('/products', params),
+    list: async (params) => {
+        // We use a promise cache to prevent double-fetching if called simultaneously
+        const isBulkFetch = params && params.limit === 5000 && !params.search && !params.sort && !params.category;
+        if (isBulkFetch && productCachePromise) {
+            return productCachePromise;
+        }
+        const req = api.get('/products', params);
+        if (isBulkFetch) {
+            productCachePromise = req;
+        }
+        try {
+            return await req;
+        } catch (err) {
+            if (isBulkFetch) productCachePromise = null;
+            throw err;
+        }
+    },
     get: (id) => api.get(`/products/${id}`),
-    create: (data) => api.post('/products', data),
-    update: (id, data) => api.put(`/products/${id}`, data),
-    delete: (id) => api.delete(`/products/${id}`),
-    addStock: (id, data) => api.post(`/products/${id}/stock`, data),
+    create: async (data) => { const res = await api.post('/products', data); productCachePromise = null; return res; },
+    update: async (id, data) => { const res = await api.put(`/products/${id}`, data); productCachePromise = null; return res; },
+    delete: async (id) => { const res = await api.delete(`/products/${id}`); productCachePromise = null; return res; },
+    addStock: async (id, data) => { const res = await api.post(`/products/${id}/stock`, data); productCachePromise = null; return res; },
     categories: () => api.get('/products/categories'),
 };
 

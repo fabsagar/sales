@@ -11,7 +11,7 @@ function ProductModal({ product, onClose, onSaved, existingProducts = [] }) {
     const [form, setForm] = useState(product ? {
         name: product.name, description: product.description || '', category: product.category || '',
         purchase_price: product.purchase_price, default_selling_price: product.default_selling_price || '',
-        stock_quantity: '', // Default empty for new batch
+        stock_quantity: product.stock_quantity ?? '',
         image_url: product.image_url || '',
     } : EMPTY_FORM);
     const [saving, setSaving] = useState(false);
@@ -450,18 +450,21 @@ export default function ProductsPage() {
     const [search, setSearch] = useState('');
     const [modal, setModal] = useState(null); // null | 'create' | 'bulk' | product object
     const [deleting, setDeleting] = useState(null);
-    const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
 
     const fetchProducts = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await productsApi.list({ search, limit: 200, page });
+            const data = await productsApi.list({ limit: 5000 });
             setProducts(data.products || []);
-            setTotalPages(data.pagination?.pages || 1);
         } catch (err) { toast.error(err.message); }
         finally { setLoading(false); }
-    }, [search, page]);
+    }, []);
+
+    const filteredProducts = useMemo(() => {
+        if (!search.trim()) return products;
+        const s = search.toLowerCase();
+        return products.filter(p => p.name.toLowerCase().includes(s) || (p.description && p.description.toLowerCase().includes(s)));
+    }, [products, search]);
 
     useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -504,13 +507,13 @@ export default function ProductsPage() {
                     className="input pl-9"
                     placeholder="Search products..."
                     value={search}
-                    onChange={e => { setSearch(e.target.value); setPage(1); }}
+                    onChange={e => setSearch(e.target.value)}
                 />
             </div>
 
             {loading ? (
                 <div className="flex justify-center py-20"><div className="spinner w-8 h-8 border-primary-500" /></div>
-            ) : products.length === 0 ? (
+            ) : filteredProducts.length === 0 ? (
                 <div className="section-card text-center py-16">
                     <Package size={48} className="mx-auto mb-4 text-slate-600" />
                     <p className="text-slate-400 font-medium">No products found</p>
@@ -518,7 +521,7 @@ export default function ProductsPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {products.map(product => {
+                    {filteredProducts.map(product => {
                         const showPricing = isAdmin;
                         const margin = showPricing && product.purchase_price && product.default_selling_price
                             ? ((product.default_selling_price - product.purchase_price) / product.purchase_price * 100).toFixed(1)
@@ -579,28 +582,6 @@ export default function ProductsPage() {
                             </div>
                         );
                     })}
-                </div>
-            )}
-
-            {totalPages > 1 && !loading && products.length > 0 && (
-                <div className="flex items-center justify-center gap-4 mt-8 pb-8">
-                    <button 
-                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                        disabled={page === 1}
-                        className="btn-secondary px-4 py-2"
-                    >
-                        Previous
-                    </button>
-                    <span className="text-sm font-medium text-slate-400">
-                        Page {page} of {totalPages}
-                    </span>
-                    <button 
-                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                        disabled={page === totalPages}
-                        className="btn-secondary px-4 py-2"
-                    >
-                        Next
-                    </button>
                 </div>
             )}
 
