@@ -134,7 +134,7 @@ function SortableProductCard({
                     </div>
 
                     <div className="w-full">
-                        {cartItem.qty > 0 ? (
+                        {cart[product.id] !== undefined ? (
                             <div className="flex items-center bg-surface-900 rounded-2xl p-1 border border-surface-700 w-full justify-between">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onRemoveFromCart(product.id); }}
@@ -146,11 +146,16 @@ function SortableProductCard({
                                     type="number"
                                     min="0"
                                     max={product.stock_quantity}
-                                    className="w-16 bg-transparent text-center font-bold text-white text-base outline-none focus:ring-1 focus:ring-primary-500/50 rounded-lg"
-                                    value={cartItem.qty}
+                                    className="w-16 bg-transparent text-center font-bold text-white text-base outline-none focus:ring-1 focus:ring-primary-500/50 rounded-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    value={cartItem.qty || ''}
                                     onChange={(e) => {
-                                        const val = parseInt(e.target.value);
-                                        onUpdateQty(product.id, isNaN(val) ? 0 : Math.min(val, product.stock_quantity));
+                                        const raw = e.target.value;
+                                        if (raw === '') {
+                                            onUpdateQty(product.id, 0);
+                                        } else {
+                                            const val = parseInt(raw);
+                                            onUpdateQty(product.id, isNaN(val) ? 0 : Math.min(val, product.stock_quantity));
+                                        }
                                     }}
                                     onClick={(e) => e.stopPropagation()}
                                 />

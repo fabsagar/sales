@@ -54,20 +54,13 @@ export function CartProvider({ children }) {
     };
 
     const updateCartQty = (productId, qty) => {
-        setCart(prev => {
-            if (qty <= 0) {
-                const newCart = { ...prev };
-                delete newCart[productId];
-                return newCart;
+        setCart(prev => ({
+            ...prev,
+            [productId]: {
+                ...(prev[productId] || { price: '' }),
+                qty: isNaN(qty) ? 0 : qty
             }
-            return {
-                ...prev,
-                [productId]: {
-                    ...(prev[productId] || { price: '' }),
-                    qty
-                }
-            };
-        });
+        }));
     };
 
     const clearCart = () => setCart({});
