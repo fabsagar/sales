@@ -32,6 +32,7 @@ function SortableProductCard({
     onAddToCart,
     onRemoveFromCart,
     onUpdatePrice,
+    onUpdateQty,
     isAdmin
 }) {
     const {
@@ -141,7 +142,18 @@ function SortableProductCard({
                                 >
                                     <Minus size={14} />
                                 </button>
-                                <span className="px-4 text-center font-bold text-white text-base">{cartItem.qty}</span>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max={product.stock_quantity}
+                                    className="w-16 bg-transparent text-center font-bold text-white text-base outline-none focus:ring-1 focus:ring-primary-500/50 rounded-lg"
+                                    value={cartItem.qty}
+                                    onChange={(e) => {
+                                        const val = parseInt(e.target.value);
+                                        onUpdateQty(product.id, isNaN(val) ? 0 : Math.min(val, product.stock_quantity));
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
                                     disabled={cartItem.qty >= product.stock_quantity}
@@ -183,7 +195,7 @@ export default function GalleryPage() {
     const [retailers, setRetailers] = useState([]);
     const [selectedShop, setSelectedShop] = useState('');
     const [selectedProductIds, setSelectedProductIds] = useState([]);
-    const { cart, cartTotalItems, addToCart: ctxAddToCart, removeFromCart, updateCartPrice } = useCart();
+    const { cart, cartTotalItems, addToCart: ctxAddToCart, removeFromCart, updateCartPrice, updateCartQty } = useCart();
     const [ranks, setRanks] = useState(() => {
         const saved = localStorage.getItem(`gallery_ranks_${user.id}`);
         return saved ? JSON.parse(saved) : {};
@@ -568,6 +580,7 @@ export default function GalleryPage() {
                                             onAddToCart={addToCart}
                                             onRemoveFromCart={removeFromCart}
                                             onUpdatePrice={updateCartPrice}
+                                            onUpdateQty={updateCartQty}
                                             isAdmin={isAdmin}
                                         />
                                     );

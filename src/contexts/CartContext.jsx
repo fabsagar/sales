@@ -3,7 +3,14 @@ import { createContext, useContext, useState, useEffect } from 'react';
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
-    const [cart, setCart] = useState({}); // {productId: {qty, price}}
+    const [cart, setCart] = useState(() => {
+        const savedCart = localStorage.getItem('cart');
+        return savedCart ? JSON.parse(savedCart) : {};
+    });
+
+    useEffect(() => {
+        localStorage.setItem('cart', JSON.stringify(cart));
+    }, [cart]);
 
     const cartTotalItems = Object.values(cart).reduce((sum, item) => sum + item.qty, 0);
 
@@ -46,6 +53,23 @@ export function CartProvider({ children }) {
         });
     };
 
+    const updateCartQty = (productId, qty) => {
+        setCart(prev => {
+            if (qty <= 0) {
+                const newCart = { ...prev };
+                delete newCart[productId];
+                return newCart;
+            }
+            return {
+                ...prev,
+                [productId]: {
+                    ...(prev[productId] || { price: '' }),
+                    qty
+                }
+            };
+        });
+    };
+
     const clearCart = () => setCart({});
 
     return (
@@ -54,6 +78,7 @@ export function CartProvider({ children }) {
             cartTotalItems,
             addToCart,
             updateCartPrice,
+            updateCartQty,
             removeFromCart,
             clearCart
         }}>
