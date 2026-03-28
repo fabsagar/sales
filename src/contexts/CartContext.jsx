@@ -68,6 +68,14 @@ export function CartProvider({ children }) {
         }));
     };
 
+    const deleteFromCart = (productId) => {
+        setCart(prev => {
+            const newCart = { ...prev };
+            delete newCart[productId];
+            return newCart;
+        });
+    };
+
     const clearCart = () => setCart({});
 
     return (
@@ -78,6 +86,7 @@ export function CartProvider({ children }) {
             updateCartPrice,
             updateCartQty,
             removeFromCart,
+            deleteFromCart,
             clearCart
         }}>
             {children}

@@ -19,7 +19,7 @@ export default function NewOrderPage() {
     const [notes, setNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [loading, setLoading] = useState(true);
-    const { cart, clearCart } = useCart();
+    const { cart, clearCart, removeFromCart, updateCartPrice, updateCartQty, deleteFromCart } = useCart();
 
     useEffect(() => {
         Promise.all([
@@ -66,12 +66,15 @@ export default function NewOrderPage() {
 
 
     const updateItem = (productId, field, value) => {
+        if (field === 'quantity') updateCartQty(productId, value);
+        if (field === 'selling_price') updateCartPrice(productId, value);
         setOrderItems(items => items.map(i =>
             i.product.id === productId ? { ...i, [field]: value } : i
         ));
     };
 
     const removeItem = (productId) => {
+        deleteFromCart(productId);
         setOrderItems(items => items.filter(i => i.product.id !== productId));
     };
 
