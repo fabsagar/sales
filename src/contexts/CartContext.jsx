@@ -9,7 +9,12 @@ export function CartProvider({ children }) {
     });
 
     useEffect(() => {
-        localStorage.setItem('cart', JSON.stringify(cart));
+        // Only persist items with quantity > 0
+        const filteredCart = Object.entries(cart).reduce((acc, [id, item]) => {
+            if (item.qty > 0) acc[id] = item;
+            return acc;
+        }, {});
+        localStorage.setItem('cart', JSON.stringify(filteredCart));
     }, [cart]);
 
     const cartTotalItems = Object.values(cart).reduce((sum, item) => sum + item.qty, 0);
