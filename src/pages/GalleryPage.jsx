@@ -33,6 +33,7 @@ function SortableProductCard({
     onRemoveFromCart,
     onUpdatePrice,
     onUpdateQty,
+    isInCart,
     isAdmin
 }) {
     const {
@@ -134,7 +135,7 @@ function SortableProductCard({
                     </div>
 
                     <div className="w-full">
-                        {cart[product.id] !== undefined ? (
+                        {isInCart ? (
                             <div className="flex items-center bg-surface-900 rounded-2xl p-1 border border-surface-700 w-full justify-between">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onRemoveFromCart(product.id); }}
@@ -586,6 +587,7 @@ export default function GalleryPage() {
                                             onRemoveFromCart={removeFromCart}
                                             onUpdatePrice={updateCartPrice}
                                             onUpdateQty={updateCartQty}
+                                            isInCart={cart[product.id] !== undefined}
                                             isAdmin={isAdmin}
                                         />
                                     );
