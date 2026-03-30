@@ -5,6 +5,7 @@ import { productsApi, retailersApi, ordersApi } from '../lib/api.js';
 import { formatCurrency } from '../lib/format.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useCart } from '../contexts/CartContext.jsx';
+import SearchableSelect from '../components/SearchableSelect.jsx';
 import toast from 'react-hot-toast';
 
 export default function NewOrderPage() {
@@ -146,17 +147,17 @@ export default function NewOrderPage() {
                             <label className="block text-xs font-medium text-slate-400 mb-2">
                                 <Building2 size={13} className="inline mr-1" /> Select Shop *
                             </label>
-                            <select
-                                className="input"
+                            <SearchableSelect
+                                options={retailers.map(r => ({
+                                    value: r.id,
+                                    label: r.name,
+                                    sublabel: r.phone ? `Phone: ${r.phone}` : r.address
+                                }))}
                                 value={selectedShop}
-                                onChange={e => setSelectedShop(e.target.value)}
-                                required
-                            >
-                                <option value="">-- Choose Shop --</option>
-                                {retailers.map(r => (
-                                    <option key={r.id} value={r.id}>{r.name} {r.phone ? `(${r.phone})` : ''}</option>
-                                ))}
-                            </select>
+                                onChange={setSelectedShop}
+                                placeholder="Choose Shop..."
+                                emptyMessage="No shops found"
+                            />
                         </div>
 
                         {/* Notes */}

@@ -5,6 +5,7 @@ import { productsApi, retailersApi } from '../lib/api.js';
 import { formatCurrency } from '../lib/format.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useCart } from '../contexts/CartContext.jsx';
+import SearchableSelect from '../components/SearchableSelect.jsx';
 import toast from 'react-hot-toast';
 import {
     DndContext,
@@ -444,16 +445,17 @@ export default function GalleryPage() {
 
                         <div className="relative max-w-xs hidden xl:flex items-center gap-2">
                             <Building2 size={16} className="text-slate-500" />
-                            <select
-                                className="bg-surface-800 border border-surface-700/50 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:ring-1 focus:ring-primary-500 min-w-[150px]"
+                            <SearchableSelect
+                                options={retailers.map(r => ({
+                                    value: r.id,
+                                    label: r.name,
+                                    sublabel: r.phone ? `Phone: ${r.phone}` : r.address
+                                }))}
                                 value={selectedShop}
-                                onChange={(e) => setSelectedShop(e.target.value)}
-                            >
-                                <option value="">-- Generic Shop --</option>
-                                {retailers.map(r => (
-                                    <option key={r.id} value={r.id}>{r.name}</option>
-                                ))}
-                            </select>
+                                onChange={setSelectedShop}
+                                placeholder="Generic Shop"
+                                className="min-w-[200px]"
+                            />
                         </div>
 
 
@@ -514,16 +516,17 @@ export default function GalleryPage() {
                     <div className="sm:hidden flex flex-col gap-3">
                         <div className="xl:hidden flex items-center gap-2 bg-surface-800/50 p-3 rounded-2xl border border-surface-700/50">
                             <Building2 size={18} className="text-primary-500" />
-                            <select
-                                className="flex-1 bg-transparent text-sm text-white outline-none"
+                            <SearchableSelect
+                                options={retailers.map(r => ({
+                                    value: r.id,
+                                    label: r.name,
+                                    sublabel: r.phone ? `Phone: ${r.phone}` : r.address
+                                }))}
                                 value={selectedShop}
-                                onChange={(e) => setSelectedShop(e.target.value)}
-                            >
-                                <option value="">Select Shop (Optional)</option>
-                                {retailers.map(r => (
-                                    <option key={r.id} value={r.id}>{r.name}</option>
-                                ))}
-                            </select>
+                                onChange={setSelectedShop}
+                                placeholder="Select Shop (Optional)"
+                                className="flex-1"
+                            />
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="relative flex-1">
