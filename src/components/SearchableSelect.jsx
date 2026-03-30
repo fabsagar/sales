@@ -43,7 +43,7 @@ export default function SearchableSelect({
     };
 
     return (
-        <div className={`relative ${className}`} ref={dropdownRef}>
+        <div className={`relative ${className} ${isOpen ? 'z-[100]' : 'z-0'}`} ref={dropdownRef}>
             <div
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full flex items-center justify-between bg-surface-900/50 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-white cursor-pointer hover:bg-surface-800 hover:border-primary-500/30 transition-all duration-300 shadow-lg group"
