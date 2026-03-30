@@ -143,7 +143,7 @@ export default function NewOrderPage() {
                 <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
                     <div className="xl:col-span-2 space-y-4">
                         {/* Shop select */}
-                        <div className="section-card">
+                        <div className="section-card relative z-20">
                             <label className="block text-xs font-medium text-slate-400 mb-2">
                                 <Building2 size={13} className="inline mr-1" /> Select Shop *
                             </label>
@@ -161,7 +161,7 @@ export default function NewOrderPage() {
                         </div>
 
                         {/* Notes */}
-                        <div className="section-card">
+                        <div className="section-card relative z-10">
                             <label className="block text-xs text-slate-500 mb-1">Notes (optional)</label>
                             <textarea className="input resize-none text-sm" rows={4} placeholder="Order notes..." value={notes} onChange={e => setNotes(e.target.value)} />
                         </div>
