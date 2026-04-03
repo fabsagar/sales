@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Download, Eye, CheckCircle, XCircle, Loader2, ShoppingCart } from 'lucide-react';
+import { Search, Filter, Download, Eye, CheckCircle, XCircle, Loader2, ShoppingCart, Pencil } from 'lucide-react';
 import { ordersApi } from '../lib/api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { formatCurrency, formatDateTime } from '../lib/format.js';
+import { formatCurrency, formatDateTime, isEditWindowOpen } from '../lib/format.js';
 import toast from 'react-hot-toast';
 
 function StatusBadge({ status }) {
@@ -118,6 +118,11 @@ export default function OrdersPage() {
                                                 <Link to={`/orders/${order.id}`} className="btn-icon btn-sm" title="View">
                                                     <Eye size={13} />
                                                 </Link>
+                                                {(isAdmin || (order.salesperson_id === user.id && isEditWindowOpen(order.created_at))) && order.status !== 'rejected' && (
+                                                    <Link to={`/orders/edit/${order.id}`} className="btn-icon btn-sm text-amber-400" title="Edit">
+                                                        <Pencil size={13} />
+                                                    </Link>
+                                                )}
                                                 {isAdmin && order.status === 'pending' && (
                                                     <>
                                                         <button

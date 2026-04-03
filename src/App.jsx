@@ -59,6 +59,7 @@ function AppRoutes() {
                 <Route path="products/gallery" element={<PrivateRoute roles={['admin', 'salesperson']}><GalleryPage /></PrivateRoute>} />
                 <Route path="orders" element={<OrdersPage />} />
                 <Route path="orders/new" element={<PrivateRoute roles={['admin', 'salesperson']}><NewOrderPage /></PrivateRoute>} />
+                <Route path="orders/edit/:id" element={<PrivateRoute roles={['admin', 'salesperson']}><NewOrderPage /></PrivateRoute>} />
                 <Route path="orders/:id" element={<OrderDetailPage />} />
                 <Route path="retailers" element={<RetailersPage />} />
                 <Route path="reports" element={<PrivateRoute roles={['admin']}><ReportsPage /></PrivateRoute>} />

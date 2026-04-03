@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Plus, Minus, Trash2, ShoppingCart, Search, Loader2, ChevronDown, Building2 } from 'lucide-react';
 import { productsApi, retailersApi, ordersApi } from '../lib/api.js';
 import { formatCurrency } from '../lib/format.js';
@@ -12,6 +12,8 @@ export default function NewOrderPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, activeRole } = useAuth();
+    const { id: editOrderId } = useParams();
+    const isEditMode = !!editOrderId;
     const isAdmin = activeRole === 'admin';
     const [retailers, setShops] = useState([]);
     const [products, setProducts] = useState([]);
@@ -23,39 +25,65 @@ export default function NewOrderPage() {
     const { cart, clearCart, removeFromCart, updateCartPrice, updateCartQty, deleteFromCart } = useCart();
 
     useEffect(() => {
-        Promise.all([
-            retailersApi.list(),
-            productsApi.list({ limit: 5000 }),
-        ]).then(([r, p]) => {
-            const fetchedShops = r.retailers || [];
-            const fetchedProducts = p.products || [];
-            setShops(fetchedShops);
-            setProducts(fetchedProducts);
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const [r, p] = await Promise.all([
+                    retailersApi.list(),
+                    productsApi.list({ limit: 5000 }),
+                ]);
+                
+                const fetchedShops = r.retailers || [];
+                const fetchedProducts = p.products || [];
+                setShops(fetchedShops);
+                setProducts(fetchedProducts);
 
-            // Handle pre-filled products from Gallery (prefer context over location state)
-            const selected = Object.keys(cart).length > 0 ? cart : location.state?.selectedProducts;
-            const preShop = location.state?.selectedShop;
+                if (isEditMode) {
+                    const { order, items: fetchedItems } = await ordersApi.get(editOrderId);
+                    setSelectedShop(order.retailer_id.toString());
+                    setNotes(order.notes || '');
+                    
+                    const mappedItems = fetchedItems.map(item => {
+                        const product = fetchedProducts.find(p => p.id === item.product_id);
+                        return product ? {
+                            product,
+                            quantity: item.quantity,
+                            selling_price: item.selling_price
+                        } : null;
+                    }).filter(Boolean);
+                    
+                    setOrderItems(mappedItems);
+                } else {
+                    // Handle pre-filled products from Gallery (prefer context over location state)
+                    const selected = Object.keys(cart).length > 0 ? cart : location.state?.selectedProducts;
+                    const preShop = location.state?.selectedShop;
 
-            if (preShop) setSelectedShop(preShop.toString());
+                    if (preShop) setSelectedShop(preShop.toString());
 
-            if (selected && fetchedProducts.length > 0) {
-                const items = Object.entries(selected).map(([id, data]) => {
-                    const product = fetchedProducts.find(p => p.id === parseInt(id));
-                    const quantity = typeof data === 'object' ? data.qty : data;
-                    if (!product || quantity <= 0) return null;
+                    if (selected && fetchedProducts.length > 0) {
+                        const items = Object.entries(selected).map(([id, data]) => {
+                            const product = fetchedProducts.find(p => p.id === parseInt(id));
+                            const quantity = typeof data === 'object' ? data.qty : data;
+                            if (!product || quantity <= 0) return null;
 
-                    const selling_price = typeof data === 'object' ? (data.price || '') : '';
-                    return { product, quantity, selling_price };
-                }).filter(Boolean);
+                            const selling_price = typeof data === 'object' ? (data.price || '') : '';
+                            return { product, quantity, selling_price };
+                        }).filter(Boolean);
 
-                if (items.length > 0) {
-                    setOrderItems(items);
-                    toast.success(`Imported ${items.length} items to order`);
+                        if (items.length > 0) {
+                            setOrderItems(items);
+                        }
+                    }
                 }
+            } catch (err) {
+                toast.error(err.message);
+            } finally {
+                setLoading(false);
             }
-        }).catch(err => toast.error(err.message))
-            .finally(() => setLoading(false));
-    }, [location.state, productsApi, retailersApi]);
+        };
+
+        fetchData();
+    }, [editOrderId, isEditMode, location.state]);
     // Note: removed unnecessary log/comment from previous failed attempt
 
 
@@ -117,10 +145,17 @@ export default function NewOrderPage() {
                     selling_price: parseFloat(i.selling_price),
                 })),
             };
-            const data = await ordersApi.create(payload);
-            toast.success('Order submitted successfully!');
-            clearCart();
-            navigate(`/orders/${data.orderId}`);
+            if (isEditMode) {
+                await ordersApi.update(editOrderId, payload);
+                toast.success('Order updated successfully!');
+            } else {
+                const data = await ordersApi.create(payload);
+                toast.success('Order submitted successfully!');
+                clearCart();
+                navigate(`/orders/${data.orderId}`);
+                return;
+            }
+            navigate(`/orders/${editOrderId || ''}`);
         } catch (err) {
             toast.error(err.message);
         } finally {
@@ -134,8 +169,8 @@ export default function NewOrderPage() {
         <div className="animate-fade-in">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Create New Order</h1>
-                    <p className="text-slate-400 text-sm mt-1">Select shop and add products</p>
+                    <h1 className="page-title">{isEditMode ? `Edit Order #${editOrderId}` : 'Create New Order'}</h1>
+                    <p className="text-slate-400 text-sm mt-1">{isEditMode ? 'Update order details and items' : 'Select shop and add products'}</p>
                 </div>
             </div>
 
@@ -254,7 +289,7 @@ export default function NewOrderPage() {
                             )}
 
                             <button type="submit" disabled={submitting || orderItems.length === 0 || !selectedShop} className="btn-primary w-full mt-4 py-3">
-                                {submitting ? <><Loader2 size={15} className="animate-spin" /> Submitting...</> : 'Submit Order'}
+                                {submitting ? <><Loader2 size={15} className="animate-spin" /> {isEditMode ? 'Updating...' : 'Submitting...'}</> : (isEditMode ? 'Update Order' : 'Submit Order')}
                             </button>
                         </div>
                     </div>

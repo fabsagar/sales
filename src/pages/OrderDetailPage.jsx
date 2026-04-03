@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
-import { ArrowLeft, Printer, CheckCircle, XCircle, Package, Loader2, FileText } from 'lucide-react';
+import { ArrowLeft, Printer, CheckCircle, XCircle, Package, Loader2, FileText, Pencil } from 'lucide-react';
 import { ordersApi } from '../lib/api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { formatCurrency, formatDateTime } from '../lib/format.js';
+import { formatCurrency, formatDateTime, isEditWindowOpen } from '../lib/format.js';
 import InvoiceTemplate from '../components/InvoiceTemplate.jsx';
 import toast from 'react-hot-toast';
 
@@ -70,6 +70,11 @@ export default function OrderDetailPage() {
                 </div>
                 <div className="flex items-center gap-2">
                     <StatusBadge status={order.status} />
+                    {(isAdmin || (order.salesperson_id === user.id && isEditWindowOpen(order.created_at))) && order.status !== 'rejected' && (
+                        <Link to={`/orders/edit/${id}`} className="btn-secondary no-print text-amber-400 border-amber-500/30 hover:bg-amber-500/10">
+                            <Pencil size={15} /> Edit Order
+                        </Link>
+                    )}
                     <button onClick={handlePrint} className="btn-secondary no-print">
                         <Printer size={15} /> Print Invoice
                     </button>

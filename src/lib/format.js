@@ -29,3 +29,10 @@ export function formatDateTime(dateStr) {
 export function formatNumber(val) {
     return new Intl.NumberFormat('en-IN').format(val);
 }
+
+export function isEditWindowOpen(dateStr) {
+    if (!dateStr) return false;
+    const created = new Date(dateStr + ' Z').getTime();
+    const now = Date.now();
+    return (now - created) < 24 * 60 * 60 * 1000;
+}
