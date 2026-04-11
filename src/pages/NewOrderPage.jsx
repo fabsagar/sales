@@ -20,6 +20,7 @@ export default function NewOrderPage() {
     const [selectedShop, setSelectedShop] = useState('');
     const [orderItems, setOrderItems] = useState([]); // [{product, quantity, selling_price}]
     const [notes, setNotes] = useState('');
+    const [originalQuantities, setOriginalQuantities] = useState({}); // {productId: qty}
     const [submitting, setSubmitting] = useState(false);
     const [loading, setLoading] = useState(true);
     const { cart, clearCart, removeFromCart, updateCartPrice, updateCartQty, deleteFromCart } = useCart();
@@ -43,7 +44,9 @@ export default function NewOrderPage() {
                     setSelectedShop(order.retailer_id.toString());
                     setNotes(order.notes || '');
                     
+                    const origQtys = {};
                     const mappedItems = fetchedItems.map(item => {
+                        origQtys[item.product_id] = item.quantity;
                         const product = fetchedProducts.find(p => p.id === item.product_id);
                         return product ? {
                             product,
@@ -52,6 +55,7 @@ export default function NewOrderPage() {
                         } : null;
                     }).filter(Boolean);
                     
+                    setOriginalQuantities(origQtys);
                     setOrderItems(mappedItems);
                 } else {
                     // Handle pre-filled products from Gallery (prefer context over location state)
@@ -95,16 +99,43 @@ export default function NewOrderPage() {
 
 
     const updateItem = (productId, field, value) => {
-        if (field === 'quantity') updateCartQty(productId, value);
-        if (field === 'selling_price') updateCartPrice(productId, value);
+        if (!isEditMode) {
+            if (field === 'quantity') updateCartQty(productId, value);
+            if (field === 'selling_price') updateCartPrice(productId, value);
+        }
         setOrderItems(items => items.map(i =>
             i.product.id === productId ? { ...i, [field]: value } : i
         ));
     };
 
     const removeItem = (productId) => {
-        deleteFromCart(productId);
+        if (!isEditMode) deleteFromCart(productId);
         setOrderItems(items => items.filter(i => i.product.id !== productId));
+    };
+
+    const addProduct = (productId) => {
+        const product = products.find(p => p.id === parseInt(productId));
+        if (!product) return;
+
+        if (orderItems.some(i => i.product.id === product.id)) {
+            toast.error(`${product.name} is already in the order`);
+            return;
+        }
+
+        if (product.stock_quantity <= 0 && !originalQuantities[product.id]) {
+            toast.error('Product is out of stock');
+            return;
+        }
+
+        setOrderItems(prev => [
+            ...prev,
+            {
+                product,
+                quantity: 1,
+                selling_price: product.default_selling_price || ''
+            }
+        ]);
+        toast.success(`Added ${product.name}`);
     };
 
     const totals = orderItems.reduce((acc, item) => {
@@ -131,7 +162,11 @@ export default function NewOrderPage() {
                 toast.error(`Price for ${item.product.name} is not correct`);
                 return;
             }
-            if (item.quantity > item.product.stock_quantity) { toast.error(`Insufficient stock for ${item.product.name}`); return; }
+            const originalQty = originalQuantities[item.product.id] || 0;
+            if (item.quantity > (item.product.stock_quantity + originalQty)) {
+                toast.error(`Insufficient stock for ${item.product.name}. Max available: ${item.product.stock_quantity + originalQty}`);
+                return;
+            }
         }
 
         setSubmitting(true);
@@ -213,6 +248,27 @@ export default function NewOrderPage() {
                                 )}
                             </h2>
 
+                            {isEditMode && (
+                                <div className="mb-6 p-4 bg-surface-900/40 border border-surface-700/30 rounded-2xl">
+                                    <label className="block text-[10px] font-bold text-primary-500 uppercase tracking-widest mb-2">
+                                        Add Products to Order
+                                    </label>
+                                    <SearchableSelect
+                                        options={products
+                                            .filter(p => p.is_active !== 0)
+                                            .map(p => ({
+                                                value: p.id,
+                                                label: p.name,
+                                                sublabel: `Stock: ${p.stock_quantity + (originalQuantities[p.id] || 0)} | Price: ₹${p.default_selling_price}`
+                                            }))}
+                                        value=""
+                                        onChange={addProduct}
+                                        placeholder="Search and add product..."
+                                        emptyMessage="No matching products"
+                                    />
+                                </div>
+                            )}
+
                             {orderItems.length === 0 ? (
                                 <div className="text-center py-10 text-slate-500">
                                     <ShoppingCart size={32} className="mx-auto mb-3 opacity-30" />
@@ -243,12 +299,12 @@ export default function NewOrderPage() {
                                                             }} className="w-7 h-7 rounded-lg bg-surface-700 flex items-center justify-center text-slate-400 hover:text-white hover:bg-surface-600 transition-colors">
                                                                 <Minus size={12} />
                                                             </button>
-                                                            <input type="number" min="1" max={item.product.stock_quantity} value={item.quantity}
+                                                            <input type="number" min="1" max={item.product.stock_quantity + (originalQuantities[item.product.id] || 0)} value={item.quantity}
                                                                 onChange={e => updateItem(item.product.id, 'quantity', parseInt(e.target.value) || 1)}
                                                                 className="input py-1 px-2 text-center w-12 text-sm"
                                                             />
                                                             <button type="button" onClick={() => updateItem(item.product.id, 'quantity', qty + 1)}
-                                                                disabled={qty >= item.product.stock_quantity}
+                                                                disabled={qty >= (item.product.stock_quantity + (originalQuantities[item.product.id] || 0))}
                                                                 className="w-7 h-7 rounded-lg bg-surface-700 flex items-center justify-center text-slate-400 hover:text-white hover:bg-surface-600 transition-colors disabled:opacity-30">
                                                                 <Plus size={12} />
                                                             </button>
