@@ -13,7 +13,7 @@ jobs:
           projectName: demo-sales
           directory: dist
         env:
-          VITE_API_URL: https://sales-management-api.retailer-sales.workers.dev/api
+          VITE_API_URL: https://sales-worker.sagarabcdxyz3.workers.dev/api
           VITE_LICENSE_KEY: ABC-123
           VITE_GOOGLE_CLIENT_ID: 938440224317-l5arlpo9r92palggdh22vu9o49k5fill.apps.googleusercontent.com
           VITE_APP_NAME: DemoSales
